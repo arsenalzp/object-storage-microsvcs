@@ -1,39 +1,51 @@
 'use strict'
 
-const bucket = require('../models/bucket');
-const Grants = require('../utils/check-grants');
+const bucket = require('./models/bucket');
+const Grants = require('./utils/check-grants');
 
-/**
- * Service.
- * Delete object from the bucket.
- * 
- * @param {String} bucketName bucket name
- * @param {String} objectName object name
- * @param {String} userId requester ID
- * @returns {Promise<Array>} resolve Array [Number, Error]
- */
-async function deleteKey(bucketName, objectName, userId) {
+const cwd = require('process').cwd();
+const PROTO_PATH = cwd + '/proto/index.proto';
+const grpc = require('@grpc/grpc-js');
+const protoLoader = require('@grpc/proto-loader');
+const packageDef = protoLoader.loadSync(PROTO_PATH, {});
+const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
+const svc = protoDescriptor.services;
+
+const server = new grpc.Server();
+server.bindAsync(
+  "0.0.0.0:8004", 
+  grpc.ServerCredentials.createInsecure(), 
+  () => {
+    server.start()
+  }
+);
+server.addService(svc.DeleteKey.service,
+  {
+    "DeleteKey": deleteKey
+  }
+);
+
+async function deleteKey({ request }, cb) {
+  const { bucketName, objectName, userId } = request;
+
   try {
     {
       const [_, grants] = await bucket.isBucketExists(bucketName);
-      if (!grants) return [404, null]
+      if (!grants) return cb(null, {statusCode:404})
 
       const manageAuth = new Grants(userId, 'del', grants);
       const isAuthorized = manageAuth.check(); // check user grants for certain method
-      if (!isAuthorized) return [403, null]
+      if (!isAuthorized) return cb(null, {statusCode:403})
     }
 
     const [isFileExists, objectId] = await bucket.isFileExists(bucketName, objectName);
-    if (!isFileExists) return [404, null]
+    if (!isFileExists) return cb(null, {statusCode:404})
       
     const [statusCode, _] = await bucket.deleteKey(bucketName, objectName, objectId);
 
-    return [statusCode, null]
+    cb(null, {statusCode})
   } catch (err) {
-    throw {
-      errorCode: 500,
-      message: err.message
-    }
+    cb(err, null)
   }
 }
 

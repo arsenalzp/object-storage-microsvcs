@@ -56,7 +56,7 @@ async function put(req, res) {
        * invoke createBucket service
        * to create a new bucket
        */
-       clientCreateBucket.CreateBucket(
+      clientCreateBucket.CreateBucket(
         {bucketName, userId},
         (err, resp) => {
           if (err) throw err
@@ -64,7 +64,7 @@ async function put(req, res) {
           const { statusCode } = resp;
           return res.status(statusCode).set(HEADERS).end()
         }
-    );
+      );
     } else if (bucketName && objectName && aclMethod) {
       /**
        * bucketName, objectName, aclMethod are defined
@@ -82,7 +82,7 @@ async function put(req, res) {
           const { statusCode } = resp;
           return res.status(statusCode).set(HEADERS).end()
         }
-      )
+      );
     } else if (bucketName && !objectName && aclMethod) {
       /**
        * bucketName, aclMethod are defned, objectName is null
@@ -100,7 +100,7 @@ async function put(req, res) {
           const { statusCode } = resp;
           return res.status(statusCode).set(HEADERS).end()
         }
-      )
+      );
     } else if (bucketName && objectName && !aclMethod) {
       /**
        * bucketName, objectName are defined, aclMethod is null

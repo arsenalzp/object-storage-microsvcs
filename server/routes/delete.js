@@ -3,7 +3,8 @@
 const HEADERS = {'Content-Type': 'application/json'};
 
 const User = require('../models/user');
-const deleteKey = require('../services/delete-key');
+const clientDeleteKey = require('../protos/delete-key');
+// const deleteKey = require('../services/delete-key');
 
 const user = new User();
 user.setUserId();
@@ -19,7 +20,7 @@ user.setUserId();
  */
 async function del(req, res) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
-  const fileName = req.params.fileName; // retrieve a file name
+  const objectName = req.params.fileName; // retrieve a file name
   const key = req.query.key; // retrieve the API key
 
   // Is key provided? If no, respond 422 
@@ -33,8 +34,8 @@ async function del(req, res) {
 
   if (!userId) {
     return res
-      .status(401)
-      .end();
+    .status(401)
+    .end();
   }
   
   try {
@@ -42,20 +43,22 @@ async function del(req, res) {
      * invoke deleteKey service
      * to delete the object from the bucket
      */
-    const [statusCode, _] = await deleteKey(bucketName, fileName, userId);
+    clientDeleteKey.DeleteKey(
+      {bucketName, objectName, userId},
+      (err, resp) => {
+        if (err) throw err
 
+        const {statusCode} = resp;
+        return res.status(statusCode).set(HEADERS).end()
+      }
+    );
+  } catch (err) {
+    // need to put error into a journal
     return res
-      .status(statusCode)
-      .set(HEADERS)
-      .end()
-  } catch ({errorCode}) {
-    
-    return res
-      .status(errorCode)
-      .set(HEADERS)
-      .end()
+    .status(500)
+    .set(HEADERS)
+    .end()
   }
-  
 }
 
 module.exports = del;
