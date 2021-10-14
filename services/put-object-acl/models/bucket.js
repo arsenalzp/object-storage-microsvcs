@@ -416,7 +416,7 @@ async function putObjectOrBucketACL(bucketName, fileName, newGrants) {
         } 
       )
 
-      return [200, dbUpdateResult]
+      return [201, dbUpdateResult]
     } else {
       const dbClient = await client;
       const db = dbClient.db(DBNAME);

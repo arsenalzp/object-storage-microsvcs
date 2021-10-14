@@ -1,46 +1,56 @@
 'use strict'
 
-const bucket = require('../models/bucket');
-const Grants = require('../utils/check-grants');
+const bucket = require('./models/bucket');
+const Grants = require('./utils/check-grants');
 
-/**
- * Service.
- * Put a new ACL to the object.
- * 
- * @param {String} bucketName bucket name
- * @param {String} objectName object name
- * @param {String} userId requester ID
- * @param {Object} newGrants the target grants
- * @returns {Promise<Array>} resolve Array [Number, Error]
- */
-async function putObjectACL(bucketName, objectName, requesterId, targetUserId, targetGrants) {
+const cwd = require('process').cwd();
+const PROTO_PATH = cwd + '/proto/create-bucket.proto';
+const grpc = require('@grpc/grpc-js');
+const protoLoader = require('@grpc/proto-loader');
+const packageDef = protoLoader.loadSync(PROTO_PATH, {});
+const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
+const svc = protoDescriptor.services;
+
+const server = new grpc.Server();
+server.bindAsync(
+  "0.0.0.0:8002", 
+  grpc.ServerCredentials.createInsecure(), 
+  () => {
+    server.start()
+  }
+);
+server.addService(svc.CreateBucket.service,
+  {
+    "PutObjectAcl": putObjectACL
+  }
+);
+
+//async function putObjectACL(bucketName, objectName, requesterId, targetUserId, targetGrants) {
+async function putObjectACL({ request }, cb) {
+  const { bucketName, objectName, requesterId, targetUserId, targetGrants } = request;
   let manageAuth = null;
 
   try {
     {
       const [_, grants] = await bucket.isBucketExists(bucketName);
-      if (!grants) return [404, null]
+      if (!grants) return cb(null, {statusCode:404})
 
       manageAuth = new Grants(requesterId, 'put', grants);
       const isAuthorized = manageAuth.check(); // check user grants for certain method
-      if (!isAuthorized) return [403, null]
+      if (!isAuthorized) return cb(null, {statusCode:403})
     }
 
     {
       const [isFileExists, _] = await bucket.isFileExists(bucketName, objectName);
-      if (!isFileExists) return [404, null]
+      if (!isFileExists) return cb(null, {statusCode:404})
     }
 
     const modifiedGrants = manageAuth.set(targetUserId, targetGrants); // set object ACL
     const [statusCode, _] = await bucket.putObjectOrBucketACL(bucketName, objectName, modifiedGrants);
     
-    return [statusCode, null]
+    return cb(null, {statusCode})
   } catch (err) {
-    throw {
-      errorCode: 500,
-      message: err.message
-    }
+    cb(err, null)
   }
 }
 
-module.exports = putObjectACL;

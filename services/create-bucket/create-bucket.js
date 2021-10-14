@@ -1,4 +1,5 @@
 'use strict'
+
 const cwd = require('process').cwd();
 const PROTO_PATH = cwd + '/proto/create-bucket.proto';
 const bucket = require('./models/bucket');
