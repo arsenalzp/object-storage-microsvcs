@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package services;
+
+service GetListBuckets {
+  rpc GetListBuckets (Request) returns (Response);
+}
+
+message Request {
+  string userId = 1;
+}
+
+message Response {
+  uint32 statusCode = 1;
+  string buckets = 2;
+}
+

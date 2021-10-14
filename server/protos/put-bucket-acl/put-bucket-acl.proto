@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package services;
+
+service PutBucketAcl {
+  rpc PutBucketAcl (Request) returns (Response);
+}
+
+message Request {
+  string bucketName = 1; 
+  string requesterId = 2; 
+  string targetUserId = 3; 
+  string targetGrants = 4;
+}
+
+message Response {
+  uint32 statusCode = 1;
+}

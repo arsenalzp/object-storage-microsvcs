@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package services;
+
+service GetBucketAcl {
+  rpc GetBucketAcl (Request) returns (Response);
+}
+
+message Request {
+  string bucketName = 1;
+  string userId = 2;
+}
+
+message Response {
+  uint32 statusCode = 1;
+  string grants = 2;
+}
