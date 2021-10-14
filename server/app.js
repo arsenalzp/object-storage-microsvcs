@@ -6,9 +6,9 @@ const multer = require('multer');
 
 // Import routes
 const put = require('./routes/put');
-const get = require('./routes/get');
-const head = require('./routes/head');
-const del = require('./routes/delete');
+// const get = require('./routes/get');
+// const head = require('./routes/head');
+// const del = require('./routes/delete');
 
 // Create new memory storage for multer
 const storage = multer.memoryStorage()
@@ -36,13 +36,13 @@ app.all('/:bucketId/:fileName', (req, res, next) => {
 })
 
 // HEAD routes
-app.head('/:bucketId', head);
-app.head('/:bucketId/:fileName', head);
+// app.head('/:bucketId', head);
+// app.head('/:bucketId/:fileName', head);
 
 // GET routes
-app.get('/', get);
-app.get('/:bucketId', get);
-app.get('/:bucketId/:fileName', get);
+// app.get('/', get);
+// app.get('/:bucketId', get);
+// app.get('/:bucketId/:fileName', get);
 
 // PUT routes
 app.put('/:bucketId/:fileName', upload.single('upload'), put);
@@ -50,7 +50,7 @@ app.put('/:bucketId', put)
 app.put('/:bucketId/:fileName', put)
 
 // DELETE routes
-app.delete('/:bucketId/:fileName', del);
+// app.delete('/:bucketId/:fileName', del);
 
 app.listen(8080, () => {
 	console.log('Listening on 8080 port');

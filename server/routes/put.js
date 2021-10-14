@@ -3,11 +3,12 @@
 const HEADERS = {'Content-Type': 'application/json'};
 
 const User = require('../models/user');
-const createBucket = require('../services/create-bucket');
 const getHeaders = require('../models/get-headers');
-const putObjectACL = require('../services/put-object-acl');
-const putBucketACL = require('../services/put-bucket-acl');
-const putObject = require('../services/put-object');
+// const createBucket = require('../services/create-bucket');
+const createBucketClient = require('../protos/create-bucket');
+// const putObjectACL = require('../services/put-object-acl');
+// const putBucketACL = require('../services/put-bucket-acl');
+// const putObject = require('../services/put-object');
 
 const user = new User();
 user.setUserId();
@@ -52,9 +53,15 @@ async function put(req, res) {
        * invoke createBucket service
        * to create a new bucket
        */
-      const [statusCode, _] = await createBucket(bucketName, userId);
-  
-      return res.status(statusCode).set(HEADERS).end()
+    createBucketClient.createBucket(
+        {bucketName, userId},
+        (err, response) => {
+          if (err) throw err
+          
+          const { statusCode } = response;
+          return res.status(statusCode).set(HEADERS).end()
+        }
+    );
     } else if (bucketName && fileName && aclMethod) {
       /**
        * bucketName, fileName, aclMethod are defined
@@ -109,10 +116,9 @@ async function put(req, res) {
       .set(HEADERS)
       .end();
     }
-  } catch ({errorCode}) {
-
+  } catch (err) {
     return res
-    .status(errorCode)
+    .status(500)
     .set(HEADERS)
     .end();
   }

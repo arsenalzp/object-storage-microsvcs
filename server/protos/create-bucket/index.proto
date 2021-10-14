@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package services;
 
-
 service CreateBucket {
   rpc CreateBucket (Request) returns (Response);
 }

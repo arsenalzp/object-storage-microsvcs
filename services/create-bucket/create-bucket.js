@@ -22,28 +22,18 @@ server.addService(svc.CreateBucket.service,
   }
 );
 
-/**
- * Service.
- * Create a new bucket.
- * 
- * @param {String} bucketName bucket name
- * @param {String} userId requester ID
- * @returns {Promise<Array>} resolve Array [Number, Error]
- */
-function createBucket(call, cb) {
+async function createBucket({request}, cb) {
+  const {bucketName, userId} = request;
   try {
     const [_, isExist] = await bucket.isBucketExists(bucketName);
 
     if (!isExist) {
       const [statusCode, _] = await bucket.createBucket(bucketName, userId);
-      if (statusCode === 201) return [statusCode, null]
+      if (statusCode === 201) return cb(null, {statusCode})
     }
 
-    return [409, null]
+    return cb(null, {statusCode:409})
   } catch(err) {
-    throw {
-      errorCode: 500,
-      message: err.message
-    }
+    cb(err, null)
   }
 }
