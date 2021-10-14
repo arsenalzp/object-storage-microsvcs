@@ -1,5 +1,5 @@
 const cwd = require("process").cwd();
-const PROTO_PATH = cwd + '/protos/delete-key/index.proto';
+const PROTO_PATH = cwd + '/clients/delete-key/index.proto';
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require('@grpc/proto-loader');
 const packageDef = protoLoader.loadSync(PROTO_PATH, {});

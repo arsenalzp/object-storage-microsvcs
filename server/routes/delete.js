@@ -3,7 +3,7 @@
 const HEADERS = {'Content-Type': 'application/json'};
 
 const User = require('../models/user');
-const clientDeleteKey = require('../protos/delete-key');
+const clientDeleteKey = require('../clients/delete-key');
 // const deleteKey = require('../services/delete-key');
 
 const user = new User();

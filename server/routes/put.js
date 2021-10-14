@@ -5,9 +5,9 @@ const HEADERS = {'Content-Type': 'application/json'};
 const User = require('../models/user');
 const getHeaders = require('../models/get-headers');
 
-const clientCreateBucket = require('../protos/create-bucket');
-const clientPutObjectAcl = require('../protos/put-object-acl');
-const clientPutBucketAcl = require('../protos/put-bucket-acl');
+const clientCreateBucket = require('../clients/create-bucket');
+const clientPutObjectAcl = require('../clients/put-object-acl');
+const clientPutBucketAcl = require('../clients/put-bucket-acl');
 // const createBucket = require('../services/create-bucket');
 // const putObjectACL = require('../services/put-object-acl');
 // const putBucketACL = require('../services/put-bucket-acl');
