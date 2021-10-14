@@ -1,7 +1,7 @@
 'use strict'
 
 const cwd = require('process').cwd();
-const PROTO_PATH = cwd + '/proto/create-bucket.proto';
+const PROTO_PATH = cwd + '/proto/index.proto';
 const bucket = require('./models/bucket');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');

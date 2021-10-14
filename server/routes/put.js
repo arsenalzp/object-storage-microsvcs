@@ -4,9 +4,11 @@ const HEADERS = {'Content-Type': 'application/json'};
 
 const User = require('../models/user');
 const getHeaders = require('../models/get-headers');
-// const createBucket = require('../services/create-bucket');
+
 const clientCreateBucket = require('../protos/create-bucket');
 const clientPutObjectAcl = require('../protos/put-object-acl');
+const clientPutBucketAcl = require('../protos/put-bucket-acl');
+// const createBucket = require('../services/create-bucket');
 // const putObjectACL = require('../services/put-object-acl');
 // const putBucketACL = require('../services/put-bucket-acl');
 // const putObject = require('../services/put-object');
@@ -50,7 +52,7 @@ async function put(req, res) {
   try {
     if (bucketName && !objectName && !aclMethod) {    
       /**
-       * bucketName is defined, fileName, aclMethod are null
+       * bucketName is defined, objectName, aclMethod are null
        * invoke createBucket service
        * to create a new bucket
        */
@@ -65,7 +67,7 @@ async function put(req, res) {
     );
     } else if (bucketName && objectName && aclMethod) {
       /**
-       * bucketName, fileName, aclMethod are defined
+       * bucketName, objectName, aclMethod are defined
        * invoke putObjectACL
        * to put a new ACLs for the object in the bucket
        */
@@ -81,25 +83,27 @@ async function put(req, res) {
           return res.status(statusCode).set(HEADERS).end()
         }
       )
-      if (wasPut === 404) return res.status(404).set(HEADERS).end()
-  
-      return res.status(201).set(HEADERS).end()
-    } else if (bucketName && !fileName && aclMethod) {
+    } else if (bucketName && !objectName && aclMethod) {
       /**
-       * bucketName, aclMethod are defned, fileName is null
+       * bucketName, aclMethod are defned, objectName is null
        * invoke putBucketACL service
        * to put a new ACLs for the bucket
        */
       const [statusCode, targetUserId, targetGrants] = getHeaders(req);
       if (statusCode !== 200) return res.status(statusCode).set(HEADERS).end()
 
-      const [wasPut, _] = await putBucketACL(bucketName, userId, targetUserId, targetGrants);
-      if (wasPut !== 200) return res.status(403).set(HEADERS).end()
-  
-      return res.status(201).set(HEADERS).end()
-    } else if (bucketName && fileName && !aclMethod) {
+      clientPutBucketAcl.PutBucketAcl(
+        {bucketName, requesterId: userId, targetUserId, targetGrants},
+        (err, resp) => {
+          if (err) throw err
+
+          const { statusCode } = resp;
+          return res.status(statusCode).set(HEADERS).end()
+        }
+      )
+    } else if (bucketName && objectName && !aclMethod) {
       /**
-       * bucketName, fileName are defined, aclMethod is null
+       * bucketName, objectName are defined, aclMethod is null
        * invoke putObject service
        * to put (upload) a new object into the bucket
        */
@@ -108,7 +112,7 @@ async function put(req, res) {
       if (!req.file) return res.status(400).set(HEADERS).end();
   
       const { buffer: fileBuffer } = req.file;
-      const [statusCode, _] = await putObject(bucketName, fileName, fileBuffer, userId);
+      const [statusCode, _] = await putObject(bucketName, objectName, fileBuffer, userId);
       
       return res
       .status(statusCode)

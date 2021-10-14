@@ -4,7 +4,7 @@ const bucket = require('./models/bucket');
 const Grants = require('./utils/check-grants');
 
 const cwd = require('process').cwd();
-const PROTO_PATH = cwd + '/proto/create-bucket.proto';
+const PROTO_PATH = cwd + '/proto/index.proto';
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const packageDef = protoLoader.loadSync(PROTO_PATH, {});
@@ -19,7 +19,7 @@ server.bindAsync(
     server.start()
   }
 );
-server.addService(svc.CreateBucket.service,
+server.addService(svc.PutObjectAcl.service,
   {
     "PutObjectAcl": putObjectACL
   }
