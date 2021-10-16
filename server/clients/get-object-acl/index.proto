@@ -3,7 +3,7 @@ syntax = "proto3";
 package services;
 
 service GetObjectAcl {
-  rpc GetMeta (Request) returns (Response);
+  rpc GetObjectAcl (Request) returns (Response);
 }
 
 message Request {

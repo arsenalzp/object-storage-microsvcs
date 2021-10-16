@@ -3,11 +3,15 @@
 const HEADERS = {'Content-Type': 'application/json'};
 
 const User = require('../models/user');
-const getObject = require('../services/get-object');
-const getListBuckets = require('../services/get-list-buckets');
-const getListObjects = require('../services/get-list-objects');
-const getObjectACL = require('../services/get-object-acl');
-const getBucketACL = require('../services/get-bucket-acl');
+// const getObject = require('../services/get-object');
+// const getListBuckets = require('../services/get-list-buckets');
+// const getListObjects = require('../services/get-list-objects');
+// const getObjectACL = require('../services/get-object-acl');
+// const getBucketACL = require('../services/get-bucket-acl');
+const clientGetBucketAcl = require('../clients/get-bucket-acl');
+const clientGetListObjects = require('../clients/get-list-objects');
+const clistnGetListBuckets = require('../clients/get-list-buckets');
+const clientGetObjectAcl = require('../clients/get-object-acl');
 
 const user = new User();
 user.setUserId();
@@ -28,7 +32,7 @@ user.setUserId();
  */
 async function get(req, res) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
-  const fileName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
+  const objectName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
   const aclMethod = req.query.acl ? req.query.acl : null; // retrieve acl query param
   const key = req.query.key; // retrieve the API key
 
@@ -54,31 +58,44 @@ async function get(req, res) {
        * invoke getListBucket service
        * to get list of user's buckets
        */
-      const [ statusCode, buckets ] = await getListBuckets(userId);
+      clistnGetListBuckets.GetListBuckets(
+        {userId},
+        (err, resp) => {
+          if (err) throw err
 
-      return res
-      .status(statusCode)
-      .set(HEADERS)
-      .end(JSON.stringify(buckets))
-    } else if (bucketName && !fileName && !aclMethod) {
+          const { statusCode, buckets } = resp;
+          return res
+          .status(statusCode)
+          .set(HEADERS)
+          .end(buckets)
+        }
+      )
+    } else if (bucketName && !objectName && !aclMethod) {
       /**
-       * bucketName is defined, fileName is null
+       * bucketName is defined, objectName is null
        * invoke getListObjects service
        * to get list of objects from the bucket
        */
-      const [ statusCode, objects ] = await getListObjects(bucketName, userId);
+      clientGetListObjects.GetListObjects(
+        {bucketName, userId},
+        (err, resp) => {
+          if (err) throw err
 
-      return res
-      .status(statusCode)
-      .set(HEADERS)
-      .end(JSON.stringify(objects))
-    } else if (bucketName && fileName && !aclMethod) {
+          const {statusCode, objects} = resp;
+
+          return res
+          .status(statusCode)
+          .set(HEADERS)
+          .end(objects)
+        }
+      )
+    } else if (bucketName && objectName && !aclMethod) {
       /**
-       * bucketName, fileName are defined, aclMethod is null
+       * bucketName, objectName are defined, aclMethod is null
        * invoke getObject service
        * to retreive object from the bucket
        */
-      const [ statusCode, readStream ]  = await getObject(bucketName, fileName, userId);
+      const [ statusCode, readStream ]  = await getObject(bucketName, objectName, userId);
 
       if (statusCode === 404 || statusCode === 403) { 
         return res
@@ -90,30 +107,42 @@ async function get(req, res) {
       res.set(HEADERS);
 
       return readStream.pipe(res)
-    } else if (bucketName && fileName && aclMethod) {
+    } else if (bucketName && objectName && aclMethod) {
       /**
-       * bucketName, fileName, aclMethod are defined
+       * bucketName, objectName, aclMethod are defined
        * invoke getObjectACL service
        * to get ACLs of the object
        */
-      const [ statusCode, grants ] = await getObjectACL(bucketName, fileName, userId)
+      clientGetObjectAcl.GetObjectAcl(
+        {bucketName, objectName, userId},
+        (err, resp) => {
+          if (err) throw err
 
-      return res
-      .status(statusCode)
-      .set(HEADERS)
-      .end(JSON.stringify(grants))
-    } else if (bucketName && !fileName && aclMethod) {
+          const { statusCode, grants } = resp;
+          return res
+          .status(statusCode)
+          .set(HEADERS)
+          .end(grants)
+        }
+      )
+    } else if (bucketName && !objectName && aclMethod) {
       /**
-       * bucketName, aclMethod are defined, fileName is null
+       * bucketName, aclMethod are defined, objectName is null
        * invoke getBucketACL service
        * to get ACLs of the bucket
        */
-      const [ statusCode, grants ] = await getBucketACL(bucketName, userId)
+      clientGetBucketAcl.GetBucketAcl(
+        { bucketName, userId },
+        (err, resp) => {
+          if (err) throw err
 
-      return res
-      .status(statusCode)
-      .set(HEADERS)
-      .end(JSON.stringify(grants))
+          const { statusCode, grants } = resp;
+          return res
+          .status(statusCode)
+          .set(HEADERS)
+          .end(grants)
+        }
+      )
     } else {
       /**
        * if services didn't match
@@ -125,10 +154,10 @@ async function get(req, res) {
       .set(HEADERS)
       .end();
     }
-  } catch({errorCode}) {
-
+  } catch(err) {
+    // need to put error into a journal
     return res
-    .status(errorCode)
+    .status(500)
     .set(HEADERS)
     .end();
   }
