@@ -1,5 +1,7 @@
 'use strict'
 
+const { SERVICE_PORT } = process.env;
+
 const bucket = require('./models/bucket');
 const Grants = require('./utils/check-grants');
 
@@ -13,7 +15,7 @@ const svc = protoDescriptor.services;
 
 const server = new grpc.Server();
 server.bindAsync(
-  "0.0.0.0:8004", 
+  `0.0.0.0:${SERVICE_PORT}`, 
   grpc.ServerCredentials.createInsecure(), 
   () => {
     server.start()
@@ -43,10 +45,8 @@ async function deleteKey({ request }, cb) {
       
     const [statusCode, _] = await bucket.deleteKey(bucketName, objectName, objectId);
 
-    cb(null, {statusCode})
+    return cb(null, {statusCode})
   } catch (err) {
-    cb(err, null)
+    return cb(err, null)
   }
 }
-
-module.exports = deleteKey;

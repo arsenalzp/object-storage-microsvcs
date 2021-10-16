@@ -1,0 +1,17 @@
+{
+  "name": "get-bucket-meta",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.4.1",
+    "@grpc/proto-loader": "^0.6.5",
+    "mongodb": "^4.1.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

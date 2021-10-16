@@ -1,16 +1,22 @@
-const URL = 'mongodb://localhost:27017';
+const { DB_HOST, DB_PORT } = process.env;
 
-const {MongoClient, GridFSBucket} = require('mongodb');
-const { Connection } = require('mongodb/lib/core');
+const URL = `mongodb://${DB_HOST}:${DB_PORT}`;
+
+const { MongoClient, GridFSBucket } = require('mongodb');
 const options = {
   useUnifiedTopology: true,
-  poolSize: 100,
   maxPoolSize: 200
 }
 
 
-const client = new MongoClient.connect(URL, options);
-exports.client = client;
+const mongoClient = new MongoClient(URL, options);
+exports.client = async () => { 
+  try {
+    return await mongoClient.connect() 
+  } catch(err) {
+    console.log(err)
+  }
+}
 
 exports.gridFs = (db, options) => {
   const gridFs = new GridFSBucket (db, options);

@@ -17,8 +17,7 @@ const { ObjectID } = require('mongodb');
  */
 async function isFileExists(bucketName, objectName) {
   try {
-    const dbClient = await client;
-    const db = dbClient.db(DBNAME);
+    const db = (await client()).db(DBNAME)
 
     const findFileResult = await db
       .collection(FILECOLLECTION)
@@ -50,8 +49,7 @@ async function isFileExists(bucketName, objectName) {
  */
 async function isBucketExists(bucketName) {
   try {
-    const dbClient = await client;
-    const db = dbClient.db(DBNAME);
+    const db = (await client()).db(DBNAME)
 
     const result = await db
       .collection(COLLECTION)
@@ -62,6 +60,7 @@ async function isBucketExists(bucketName) {
     
     return [200, result]
   } catch (err) {
+    console.log(`isBucketExists ${err}`);
     throw {
       exitCode: 500,
       message: err.message
@@ -78,10 +77,9 @@ async function isBucketExists(bucketName) {
  */
 async function createBucket(bucketName, userId) {
   try {
-    const dbClient = await client;
-    const db = dbClient.db(DBNAME);
+    const db = (await client()).db(DBNAME)
+    
     const col = db.collection(COLLECTION);
-
     const insertDbResult = await col.insertOne({
       bucketname: bucketName, 
       createdAt: new Date(),
@@ -102,6 +100,8 @@ async function createBucket(bucketName, userId) {
       exitCode: 500,
       message: err.message
     }
+  } finally {
+    client.close()
   }
 }
 
@@ -161,8 +161,7 @@ async function createBucket(bucketName, userId) {
  */
 async function getBucketGrants(bucketName) {
   try {
-    const dbClient = await client;
-    const db = dbClient.db(DBNAME);
+    const db = (await client()).db(DBNAME)
 
     const { _id, grants } = await col.findOne(
       { bucketname: bucketName }, 
@@ -189,8 +188,7 @@ async function getBucketGrants(bucketName) {
  */
 async function _createFile(bucketName, fileName, userId, fileBuffer) {
   try {
-    const dbClient = await client;
-    const db = dbClient.db(DBNAME);
+    const db = (await client()).db(DBNAME)
     
     const bucket = gridFs(db, { bucketName: bucketName });
     
@@ -247,8 +245,8 @@ async function _createFile(bucketName, fileName, userId, fileBuffer) {
  */
 async function _updateFile(bucketName, fileId, fileName, userId, fileBuffer) {
   try {
-    const dbClient = await client;
-    const db = dbClient.db(DBNAME);
+    const db = (await client()).db(DBNAME);
+
     const bucket = gridFs(db, { bucketName: bucketName });
 
     // Delete old object in the gridFS 
@@ -344,8 +342,8 @@ async function uploadFile(bucketName, fileName, userId, fileBuffer) {
  */
 async function getFile(bucketName, fileName) {
   try {
-    const dbClient = await client;
-    const db = dbClient.db(DBNAME);
+    const db = (await client()).db(DBNAME);
+
     const bucket = gridFs(db, { bucketName: bucketName });
 
     // Create readable stream of the gridFS
@@ -368,8 +366,8 @@ async function getFile(bucketName, fileName) {
  */
 async function getBuckets(userId) {
   try {
-    const dbClient = await client;
-    const db = dbClient.db(DBNAME);
+    const db = (await client()).db(DBNAME);
+
     const dbFindResult = await db
       .collection(COLLECTION)
       .find({
@@ -404,8 +402,8 @@ async function putObjectOrBucketACL(bucketName, fileName, newGrants) {
      * apply grants to a bucket
      */
     if (!fileName) {
-      const dbClient = await client;
-      const db = dbClient.db(DBNAME);
+      const db = (await client()).db(DBNAME);
+
       const col = db.collection(COLLECTION)
       const dbUpdateResult = await col.updateOne(
         {
@@ -418,8 +416,8 @@ async function putObjectOrBucketACL(bucketName, fileName, newGrants) {
 
       return [200, dbUpdateResult]
     } else {
-      const dbClient = await client;
-      const db = dbClient.db(DBNAME);
+      const db = (await client()).db(DBNAME);
+      
       const col = db.collection(FILECOLLECTION)
       const dbUpdateResult = await col.updateOne(
         {
@@ -450,9 +448,7 @@ async function putObjectOrBucketACL(bucketName, fileName, newGrants) {
  */
 async function getObjectOrBucketACL(bucketName, fileName) {
   try {
-    const dbClient = await client;
-    const db = dbClient.db(DBNAME);
-    
+    const db = (await client()).db(DBNAME);
     /**
      * if object name is not defined then
      * return a bucket ACL
@@ -500,7 +496,7 @@ async function getObjectOrBucketACL(bucketName, fileName) {
 function getMeta(bucketName, userId) {
 
   return new Promise((resolve, reject) => {
-    client
+    client.connect()
     .then(client => {
       const db =client.db(DBNAME);
       return db
@@ -535,8 +531,7 @@ function getMeta(bucketName, userId) {
  */
 async function listObjects(bucketName) {
   try {
-    const dbClient = await client;
-    const db = dbClient.db(DBNAME);
+    const db = (await client()).db(DBNAME);
 
     const filesList = await db
       .collection(FILECOLLECTION)
@@ -561,8 +556,8 @@ async function listObjects(bucketName) {
  */
 async function deleteKey(bucketName, fileName, fileId) {
   try {
-    const dbClient = await client;
-    const db = dbClient.db(DBNAME);
+    const db = (await client()).db(DBNAME);
+
     const bucket = gridFs(db, { bucketName: bucketName });
 
     await db
@@ -580,7 +575,7 @@ async function deleteKey(bucketName, fileName, fileId) {
       exitCode: 500,
       message: err.message
     }
-  }
+  } 
 }
 
 module.exports = {
@@ -592,7 +587,7 @@ module.exports = {
   uploadFile,
   getFile,
   getBuckets,
-  getMeta,
+  // getMeta,
   getObjectOrBucketACL,
   listObjects,
   deleteKey

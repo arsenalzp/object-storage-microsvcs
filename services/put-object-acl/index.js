@@ -1,5 +1,7 @@
 'use strict'
 
+const { SERVICE_PORT } = process.env;
+
 const bucket = require('./models/bucket');
 const Grants = require('./utils/check-grants');
 
@@ -13,7 +15,7 @@ const svc = protoDescriptor.services;
 
 const server = new grpc.Server();
 server.bindAsync(
-  "0.0.0.0:8002", 
+  `0.0.0.0:${SERVICE_PORT}`, 
   grpc.ServerCredentials.createInsecure(), 
   () => {
     server.start()
@@ -50,7 +52,7 @@ async function putObjectACL({ request }, cb) {
     
     return cb(null, {statusCode})
   } catch (err) {
-    cb(err, null)
+    return cb(err, null)
   }
 }
 

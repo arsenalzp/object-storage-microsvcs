@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package services;
+
+service GetObjectAcl {
+  rpc GetObjectAcl (Request) returns (Response);
+}
+
+message Request {
+  string bucketName = 1; 
+  string objectName = 2;
+  string userId = 3;
+}
+
+message Response {
+  uint32 statusCode = 1;
+  string grants = 2;
+}

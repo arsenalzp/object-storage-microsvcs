@@ -1,27 +1,34 @@
 'use strict'
 
+const { SERVICE_PORT } = process.env;
+
 const cwd = require('process').cwd();
 const PROTO_PATH = cwd + '/proto/index.proto';
 const bucket = require('./models/bucket');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
+const { log } = require('console');
 const packageDef = protoLoader.loadSync(PROTO_PATH, {});
 const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
 const svc = protoDescriptor.services;
 
-const server = new grpc.Server();
-server.bindAsync(
-  "0.0.0.0:8001", 
-  grpc.ServerCredentials.createInsecure(), 
-  () => {
-    server.start()
-  }
-);
-server.addService(svc.CreateBucket.service,
-  {
-    "CreateBucket": createBucket
-  }
-);
+try {
+  const server = new grpc.Server();
+  server.bindAsync(
+    `0.0.0.0:${SERVICE_PORT}`, 
+    grpc.ServerCredentials.createInsecure(), 
+    () => {
+      server.start()
+    }
+  );
+  server.addService(svc.CreateBucket.service,
+    {
+      "CreateBucket": createBucket
+    }
+  );
+} catch (err) {
+  console.log(err);
+}
 
 async function createBucket({request}, cb) {
   const {bucketName, userId} = request;
@@ -35,6 +42,11 @@ async function createBucket({request}, cb) {
 
     return cb(null, {statusCode:409})
   } catch(err) {
-    cb(err, null)
+    return cb(err, null)
   }
 }
+
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});
