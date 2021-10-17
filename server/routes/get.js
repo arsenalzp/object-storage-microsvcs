@@ -1,5 +1,9 @@
 'use strict'
 
+// const {SERVICE_HOST, SERVICE_PORT} = process.env;
+const SERVICE_HOST = 'localhost';
+const SERVICE_PORT = 8100;
+
 const HEADERS = {'Content-Type': 'application/json'};
 
 const User = require('../models/user');
@@ -12,6 +16,8 @@ const clientGetBucketAcl = require('../clients/get-bucket-acl');
 const clientGetListObjects = require('../clients/get-list-objects');
 const clistnGetListBuckets = require('../clients/get-list-buckets');
 const clientGetObjectAcl = require('../clients/get-object-acl');
+const http2 = require('http2');
+const fs = require('fs');
 
 const user = new User();
 user.setUserId();
@@ -92,21 +98,37 @@ async function get(req, res) {
     } else if (bucketName && objectName && !aclMethod) {
       /**
        * bucketName, objectName are defined, aclMethod is null
-       * invoke getObject service
+       * invoke remote service
        * to retreive object from the bucket
        */
-      const [ statusCode, readStream ]  = await getObject(bucketName, objectName, userId);
 
-      if (statusCode === 404 || statusCode === 403) { 
-        return res
-        .status(statusCode)
+      // connect to remote service and instantiate HTTP/2 session
+      const client = http2.connect(`http://${SERVICE_HOST}:${SERVICE_PORT}`);
+      client.on('error', (err) => {throw err});
+
+      // instantiate HTTP/2 stream by requesting remote URL
+      const serviceResp = client.request({
+        ':path': `/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`
+      });
+
+      // The 'response' event is emitted when a response HEADERS frame has been received for this stream from the connected HTTP/2 server. 
+      serviceResp.on('response', (headers) => {
+        res
         .set(HEADERS)
-        .end()
-      }
-      res.status(statusCode);
-      res.set(HEADERS);
+        .status(headers[':status'])
+        const ws = fs.createWriteStream('/tmp/writableFile');
+        return serviceResp.pipe(res)
+      });
 
-      return readStream.pipe(res)
+      serviceResp.on('close', () => {
+        client.close()
+      });
+
+      serviceResp.on('error', () => {
+        res
+        .status(500)
+        .end()
+      });
     } else if (bucketName && objectName && aclMethod) {
       /**
        * bucketName, objectName, aclMethod are defined

@@ -101,6 +101,16 @@ services:
    ports: 
     - 8002:8002
 
+  get-object:
+   build: ./get-object
+   working_dir: /app
+   environment:
+    SERVICE_PORT: 8100
+    DB_HOST: services_db_1
+    DB_PORT: 27017
+   ports: 
+    - 8100:8100
+    
   db:
     image: mongo:4.2.11
     restart: always
