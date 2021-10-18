@@ -6,7 +6,7 @@ const FILECOLLECTION = 'filesCollection'; // MongoDB collection of files
 
 const {client, gridFs} = require('../utils/db');
 const stream = require('stream');
-const { ObjectID } = require('mongodb');
+const { ObjectId } = require('mongodb');
 
 /**
  * Check object existence in the particular bucket
@@ -183,10 +183,10 @@ async function getBucketGrants(bucketName) {
  * @param {String} bucketName bucket name
  * @param {String} fileName object name
  * @param {String} userId requester ID
- * @param {Buffer} fileBuffer buffer of file data
+ * @param {Stream} rs buffer of file data
  * @returns {Promise<Array>} resolve Array [Number, Object]
  */
-async function _createFile(bucketName, fileName, userId, fileBuffer) {
+async function _createFile(bucketName, fileName, userId, rs) {
   try {
     const db = (await client()).db(DBNAME)
     
@@ -201,12 +201,13 @@ async function _createFile(bucketName, fileName, userId, fileBuffer) {
         }
     });
     
-    const rStream = new stream.Readable();
-    rStream._read = () => {}; // need to implement private _read method 
-    rStream.push(fileBuffer); // push data into readable stream
-    rStream.push(null); // end of the stream (EOF)
-    rStream.pipe(uploadStream); // write data from the readable stream to the writable one
+    // const rStream = new stream.Readable();
+    // rStream._read = () => {}; // need to implement private _read method 
+    // rStream.push(fileBuffer); // push data into readable stream
+    // rStream.push(null); // end of the stream (EOF)
+    // rStream.pipe(uploadStream); // write data from the readable stream to the writable one
     const fileId = uploadStream.id;
+    rs.pipe(uploadStream);
 
     // Insert file metadata into MongoDB file collection
     const dbInsertResult = await db
@@ -240,17 +241,17 @@ async function _createFile(bucketName, fileName, userId, fileBuffer) {
  * @param {String} fileId object ID
  * @param {String} fileName object name
  * @param {String} userId requester ID
- * @param {Buffer} fileBuffer buffer of file data
+ * @param {Stream} rs buffer of file data
  * @returns {Promise<Array>} resolve Array [Number, Object]
  */
-async function _updateFile(bucketName, fileId, fileName, userId, fileBuffer) {
+async function _updateFile(bucketName, fileId, fileName, userId, rs) {
   try {
     const db = (await client()).db(DBNAME);
 
     const bucket = gridFs(db, { bucketName: bucketName });
 
     // Delete old object in the gridFS 
-    await bucket.delete(ObjectID(fileId));
+    await bucket.delete(ObjectId(fileId));
     
     // Create writable stream of the gridFS
     const uploadStream = bucket.openUploadStream(fileName, 
@@ -261,12 +262,13 @@ async function _updateFile(bucketName, fileId, fileName, userId, fileBuffer) {
         }
     });
 
-    const rStream = new stream.Readable(); // create readable stream
-    rStream._read = () => {}; // need to implement private _read method 
-    rStream.push(fileBuffer); // push data into readable stream
-    rStream.push(null); // end of the stream (EOF)
-    rStream.pipe(uploadStream); // write data from the readable stream to the writable one
+    // const rStream = new stream.Readable(); // create readable stream
+    // rStream._read = () => {}; // need to implement private _read method 
+    // rStream.push(fileBuffer); // push data into readable stream
+    // rStream.push(null); // end of the stream (EOF)
+    // rStream.pipe(uploadStream); // write data from the readable stream to the writable one
     const newFileId = uploadStream.id;
+    rs.pipe(uploadStream);
 
     /**
      * delete old object in the file collection
@@ -310,18 +312,18 @@ async function _updateFile(bucketName, fileId, fileName, userId, fileBuffer) {
  * @param {String} bucketName bucket name
  * @param {String} fileName object name
  * @param {String} userId requester ID
- * @param {Buffer} fileBuffer buffer of file data
+ * @param {Stream} rs buffer of file data
  * @returns {Promise<Array>} resolve Array [Number, Error]
  */
-async function uploadFile(bucketName, fileName, userId, fileBuffer) {
+async function uploadFile(bucketName, fileName, userId, rs) {
   try {
     const [_, fileId] = await isFileExists(bucketName, fileName);
     if (!fileId) {
-      await _createFile(bucketName, fileName, userId, fileBuffer);
+      await _createFile(bucketName, fileName, userId, rs);
 
       return [201, null]
     } else {
-      await _updateFile(bucketName, fileId, fileName, userId, fileBuffer);
+      await _updateFile(bucketName, fileId, fileName, userId, rs);
 
       return [200, null]
     }
@@ -567,7 +569,7 @@ async function deleteKey(bucketName, fileName, fileId) {
         filename: fileName 
       });
 
-    await bucket.delete(ObjectID(fileId));
+    await bucket.delete(ObjectId(fileId));
 
     return [200, null]
   } catch (err) {

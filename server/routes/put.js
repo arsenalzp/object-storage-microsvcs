@@ -1,8 +1,12 @@
 'use strict'
 
-const HEADERS = {'Content-Type': 'application/json'};
+const { PUT_SERVICE_HOST, PUT_SERVICE_PORT } = process.env;
+// const PUT_SERVICE_HOST = 'localhost';
+// const PUT_SERVICE_PORT = 8101;
 
-const User = require('../models/user');
+const HEADERS = {'Content-Type': 'application/json'};
+const http2 = require('http2');
+
 const getHeaders = require('../models/get-headers');
 
 const clientCreateBucket = require('../clients/create-bucket');
@@ -12,6 +16,8 @@ const clientPutBucketAcl = require('../clients/put-bucket-acl');
 // const putObjectACL = require('../services/put-object-acl');
 // const putBucketACL = require('../services/put-bucket-acl');
 // const putObject = require('../services/put-object');
+const User = require('../models/user');
+const { Stream } = require('stream');
 
 const user = new User();
 user.setUserId();
@@ -110,14 +116,41 @@ async function put(req, res) {
 
       // if file property if null - set status code 400
       if (!req.file) return res.status(400).set(HEADERS).end();
-  
-      const { buffer: fileBuffer } = req.file;
-      const [statusCode, _] = await putObject(bucketName, objectName, fileBuffer, userId);
       
-      return res
-      .status(statusCode)
-      .set(HEADERS)
-      .end()
+      // connect to remote service and instantiate HTTP/2 session
+      const client = http2.connect(`http://${PUT_SERVICE_HOST}:${PUT_SERVICE_PORT}`);
+      console.log();
+      client.on('error', (err) => {throw err});
+
+      const { buffer: fileBuffer } = req.file;
+
+      // instantiate HTTP/2 stream by requesting remote URL
+      const serviceResp = client.request({
+        ':path': `/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`,
+        ':method' : 'POST'
+      });
+
+      serviceResp.on('response', (headers) => {
+        return res
+        .status(headers[':status'])
+        .end()
+      });
+
+      serviceResp.on('ready', () => {
+        serviceResp.write(fileBuffer)
+        serviceResp.end()
+      });
+
+      serviceResp.on('close', () => {
+        console.log('Closed');
+        client.close()
+      });
+
+      serviceResp.on('error', () => {
+        return res
+        .status(500)
+        .end()
+      });
     } else {
       /**
        * if services didn't match

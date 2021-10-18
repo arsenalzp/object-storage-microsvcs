@@ -4,7 +4,6 @@ const { SERVICE_PORT } = process.env;
 
 const bucket = require('./models/bucket');
 const Grants = require('./utils/check-grants');
-
 const http2 = require('http2');
 
 const server = http2.createServer();
@@ -38,7 +37,8 @@ server.on('stream', async (stream, headers) => {
     }
 
     const [statusCode, readableStream] = await bucket.getFile(bucketName, objectName);
-    stream.respond({ ':status': 200 })
+    stream.respond({ ':status': statusCode });
+    
     return readableStream.pipe(stream)
   } catch(err) {
     stream.respond({':status': 500})
@@ -47,3 +47,7 @@ server.on('stream', async (stream, headers) => {
 });
 
 server.listen(SERVICE_PORT);
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.log('Unhandled Rejection at:', promise, 'reason:', reason);
+});

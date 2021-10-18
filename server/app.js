@@ -1,5 +1,7 @@
 'use strict'
 
+const { APP_PORT } = process.env;
+
 const http = require('http');
 const express = require('express');
 const multer = require('multer');
@@ -52,8 +54,8 @@ app.put('/:bucketId/:fileName', put)
 // DELETE routes
 app.delete('/:bucketId/:fileName', del);
 
-app.listen(8080, () => {
-	console.log('Listening on 8080 port');
+app.listen(APP_PORT, () => {
+	console.log(`Listening on ${APP_PORT} port`);
 	// Catch unhandled promise rejection
   process.on('unhandledRejection', (reason, promise) => {
     console.log('Unhandled Rejection at:', promise, 'reason:', reason);

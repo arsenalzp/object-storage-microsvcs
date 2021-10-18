@@ -1,12 +1,12 @@
 'use strict'
 
-// const {SERVICE_HOST, SERVICE_PORT} = process.env;
-const SERVICE_HOST = 'localhost';
-const SERVICE_PORT = 8100;
+const {GET_SERVICE_HOST, GET_SERVICE_PORT} = process.env;
+// const GET_SERVICE_HOST = 'localhost';
+// const GET_SERVICE_PORT = 8100;
 
 const HEADERS = {'Content-Type': 'application/json'};
+const http2 = require('http2');
 
-const User = require('../models/user');
 // const getObject = require('../services/get-object');
 // const getListBuckets = require('../services/get-list-buckets');
 // const getListObjects = require('../services/get-list-objects');
@@ -16,8 +16,7 @@ const clientGetBucketAcl = require('../clients/get-bucket-acl');
 const clientGetListObjects = require('../clients/get-list-objects');
 const clistnGetListBuckets = require('../clients/get-list-buckets');
 const clientGetObjectAcl = require('../clients/get-object-acl');
-const http2 = require('http2');
-const fs = require('fs');
+const User = require('../models/user');
 
 const user = new User();
 user.setUserId();
@@ -101,9 +100,8 @@ async function get(req, res) {
        * invoke remote service
        * to retreive object from the bucket
        */
-
       // connect to remote service and instantiate HTTP/2 session
-      const client = http2.connect(`http://${SERVICE_HOST}:${SERVICE_PORT}`);
+      const client = http2.connect(`http://${GET_SERVICE_HOST}:${GET_SERVICE_PORT}`);
       client.on('error', (err) => {throw err});
 
       // instantiate HTTP/2 stream by requesting remote URL
@@ -116,16 +114,17 @@ async function get(req, res) {
         res
         .set(HEADERS)
         .status(headers[':status'])
-        const ws = fs.createWriteStream('/tmp/writableFile');
+
         return serviceResp.pipe(res)
       });
 
       serviceResp.on('close', () => {
+        console.log('GET closed');
         client.close()
       });
 
       serviceResp.on('error', () => {
-        res
+        return res
         .status(500)
         .end()
       });

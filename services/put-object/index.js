@@ -1,38 +1,60 @@
 'use strict'
 
-const bucket = require('../models/bucket');
-const Grants = require('../utils/check-grants');
+const { SERVICE_PORT } = process.env;
 
+const bucket = require('./models/bucket');
+const Grants = require('./utils/check-grants');
+const http2 = require('http2');
+
+const server = http2.createServer()
+;
 /**
  * Service.
  * Put a new object into the bucket.
  * 
  * @param {String} bucketName bucket name
- * @param {String} fileName object name
- * @param {Buffer} fileBuffer Buffer of file data (multer)
+ * @param {String} objectName object name
+ * @param {Stream} stream Buffer of file data (multer)
  * @param {String} userId requester ID
  * @returns {Promise<Array>} resolve Array [Number, Error]
  */
-async function uploadFileIntoBucket(bucketName, fileName, fileBuffer, userId) {
+
+server.on('stream', async (stream, headers) => {
   try {
+    const PATH = headers[':path']
+    const url = new URL(`http://localhost:8101${PATH}`);
+
+    const bucketName = url.searchParams.get('bucketName');
+    const objectName = url.searchParams.get('objectName');
+    const requesterId = url.searchParams.get('requesterId');
+
     {
       const [_, grants] = await bucket.isBucketExists(bucketName);
-      if (!grants) return [404, null]
+      if (!grants) {
+        stream.respond({':status': 404})
+        return stream.end()
+      }
 
-      const manageAuth = new Grants(userId, 'put', grants);
+
+      const manageAuth = new Grants(requesterId, 'put', grants);
       const isAuthorized = manageAuth.check(); // check user grants for certain method
-      if (!isAuthorized) return [403, null]
+      if (!isAuthorized) {
+        stream.respond({':status': 403})
+        return stream.end()
+      }
     }
 
-    const [statusCode, _] = await bucket.uploadFile(bucketName, fileName, userId, fileBuffer);
-    
-    return [statusCode, null]
-  } catch(err) {
-    throw {
-      errorCode: 500,
-      message: err.message
-    }
+      const [statusCode, _] = await bucket.uploadFile(bucketName, objectName, requesterId, stream);
+      stream.respond({ ':status': statusCode });
+      return stream.end()
+  } catch (err) {
+    stream.respond({':status': 500})
+    return stream.end()
   }
-}
+});
 
-module.exports = uploadFileIntoBucket;
+server.listen(SERVICE_PORT);
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.log('Unhandled Rejection at:', promise, 'reason:', reason);
+});
