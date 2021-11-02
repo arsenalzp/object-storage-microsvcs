@@ -6,7 +6,7 @@ const FILECOLLECTION = 'filesCollection'; // MongoDB collection of files
 
 const {client, gridFs} = require('../utils/db');
 const stream = require('stream');
-const { ObjectID } = require('mongodb');
+const { ObjectId } = require('mongodb');
 
 /**
  * Check object existence in the particular bucket
@@ -60,7 +60,6 @@ async function isBucketExists(bucketName) {
     
     return [200, result]
   } catch (err) {
-    console.log(`isBucketExists ${err}`);
     throw {
       exitCode: 500,
       message: err.message
@@ -100,8 +99,6 @@ async function createBucket(bucketName, userId) {
       exitCode: 500,
       message: err.message
     }
-  } finally {
-    client.close()
   }
 }
 
@@ -250,7 +247,7 @@ async function _updateFile(bucketName, fileId, fileName, userId, fileBuffer) {
     const bucket = gridFs(db, { bucketName: bucketName });
 
     // Delete old object in the gridFS 
-    await bucket.delete(ObjectID(fileId));
+    await bucket.delete(ObjectId(fileId));
     
     // Create writable stream of the gridFS
     const uploadStream = bucket.openUploadStream(fileName, 
@@ -567,7 +564,7 @@ async function deleteKey(bucketName, fileName, fileId) {
         filename: fileName 
       });
 
-    await bucket.delete(ObjectID(fileId));
+    await bucket.delete(ObjectId(fileId));
 
     return [200, null]
   } catch (err) {

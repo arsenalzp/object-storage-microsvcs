@@ -3,6 +3,8 @@
 function getHeaders(req) {
   const userId = req.get('id');
   const xAmzAcl = req.get('x-amz-acl');
+  
+  console.log(req.headers);
 
   if (!userId) {
     return [400] // MissingSecurityHeader

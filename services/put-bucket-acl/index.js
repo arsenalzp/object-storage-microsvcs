@@ -30,7 +30,7 @@ server.addService(svc.PutBucketAcl.service,
 async function putBucketACL({ request }, cb) {
   const { bucketName, requesterId, targetUserId, targetGrants } = request;
   let manageAuth = null;
-
+  
   try {
     {
       const [_, bucketGrants] = await bucket.isBucketExists(bucketName);

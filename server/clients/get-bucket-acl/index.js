@@ -1,11 +1,12 @@
 const cwd = require("process").cwd();
+const { GET_BUCKET_ACL_SVC_HOST, GET_BUCKET_ACL_SVC_PORT } = process.env;
 const PROTO_PATH = cwd + '/clients/get-bucket-acl/index.proto';
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require('@grpc/proto-loader');
 const packageDef = protoLoader.loadSync(PROTO_PATH, {});
 const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
 const client = new protoDescriptor.services.GetBucketAcl(
-  "0.0.0.0:8005",
+  `${GET_BUCKET_ACL_SVC_HOST}:${GET_BUCKET_ACL_SVC_PORT}`,
   grpc.credentials.createInsecure()
 );
 

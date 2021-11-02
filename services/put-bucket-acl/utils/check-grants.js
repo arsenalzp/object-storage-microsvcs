@@ -17,18 +17,29 @@ class Grants {
   }
   
   set(targetUserId, targetGrants) {
-    for (const [i, v] of this.grants.grants.entries()) {
-      if (v[targetUserId]) {
-        this.grants.grants[i][targetUserId] = targetGrants;
-        return this.grants.grants
+    try {
+      for (const [i, v] of this.grants.grants.entries()) {
+        if (v[targetUserId]) {
+          this.grants.grants[i][targetUserId] = this.deserialize(targetGrants);
+          return this.grants.grants
+        }
       }
+  
+      this.grants.grants.push({[targetUserId]:targetGrants})
+  
+      return this.grants.grants
+    } catch (err) {
+      throw err
     }
-
-    this.grants.grants.push({[targetUserId]:targetGrants})
-
-    return this.grants.grants
   }
 
+  deserialize(targetGrants) {
+    try {
+      return JSON.parse(targetGrants)
+    } catch(err) {
+      throw err
+    }
+  }
   /*
   del(targetUserId) {
 

@@ -1,16 +1,15 @@
 'use strict'
 
 const { SERVICE_PORT } = process.env;
-
 const bucket = require('./models/bucket');
 const Grants = require('./utils/check-grants');
 const http2 = require('http2');
 
-const server = http2.createServer();
+const server = http2.createServer({maxSessionMemory: 2048});
 server.on('stream', async (stream, headers) => {
   try {
     const PATH = headers[':path']
-    const url = new URL(`http://localhost:8100${PATH}`);
+    const url = new URL(`http://localhost:7001${PATH}`);
 
     const bucketName = url.searchParams.get('bucketName');
     const objectName = url.searchParams.get('objectName');

@@ -1,60 +1,63 @@
 'use strict'
 
 const { SERVICE_PORT } = process.env;
+//const SERVICE_PORT = 7001;
 
 const bucket = require('./models/bucket');
 const Grants = require('./utils/check-grants');
-const http2 = require('http2');
+const http = require('http');
+const {Readable} = require('stream');
 
-const server = http2.createServer()
-;
-/**
- * Service.
- * Put a new object into the bucket.
- * 
- * @param {String} bucketName bucket name
- * @param {String} objectName object name
- * @param {Stream} stream Buffer of file data (multer)
- * @param {String} userId requester ID
- * @returns {Promise<Array>} resolve Array [Number, Error]
- */
-
-server.on('stream', async (stream, headers) => {
-  try {
-    const PATH = headers[':path']
-    const url = new URL(`http://localhost:8101${PATH}`);
+const httpSrv = http.createServer(async (req, res) => {
+  try {  
+    const data = [];
+    const url = new URL(`http://localhost:7001${req.url}`);
 
     const bucketName = url.searchParams.get('bucketName');
     const objectName = url.searchParams.get('objectName');
     const requesterId = url.searchParams.get('requesterId');
 
-    {
-      const [_, grants] = await bucket.isBucketExists(bucketName);
-      if (!grants) {
-        stream.respond({':status': 404})
-        return stream.end()
-      }
-
-
-      const manageAuth = new Grants(requesterId, 'put', grants);
-      const isAuthorized = manageAuth.check(); // check user grants for certain method
-      if (!isAuthorized) {
-        stream.respond({':status': 403})
-        return stream.end()
-      }
+    const [_, grants] = await bucket.isBucketExists(bucketName);
+    if (!grants) {
+      res.statusCode = 404;
+      return res.end()
     }
 
-      const [statusCode, _] = await bucket.uploadFile(bucketName, objectName, requesterId, stream);
-      stream.respond({ ':status': statusCode });
-      return stream.end()
+    const manageAuth = new Grants(requesterId, 'put', grants);
+    const isAuthorized = manageAuth.check(); // check user grants for certain method
+    if (!isAuthorized) {
+      res.statusCode = 403;
+      return res.end()
+    }
+
+    req.on('data', (chunk) => {
+      data.push(chunk)
+    });
+
+    req.on('end', async () => {
+      const buf = Buffer.concat(data);
+
+      // convert Buffer to readable stream
+      const readable = new Readable()
+      readable._read = () => {}
+      readable.push(buf)
+      readable.push(null)
+      const [statusCode, _] = await bucket.uploadFile(bucketName, objectName, requesterId, readable);
+
+      res.statusCode = statusCode;
+      return res.end()
+    });
+    
+    req.on('error', (err) => {
+      throw err
+    });
+
   } catch (err) {
-    stream.respond({':status': 500})
-    return stream.end()
+    res.statusCode = 500
+    return res.end()
   }
-});
+})
 
-server.listen(SERVICE_PORT);
+httpSrv.listen(SERVICE_PORT);
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.log('Unhandled Rejection at:', promise, 'reason:', reason);
-});
+

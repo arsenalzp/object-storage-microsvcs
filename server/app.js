@@ -1,8 +1,8 @@
 'use strict'
 
 const { APP_PORT } = process.env;
+//const APP_PORT = 8080
 
-const http = require('http');
 const express = require('express');
 const multer = require('multer');
 

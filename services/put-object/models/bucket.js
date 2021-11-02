@@ -60,7 +60,6 @@ async function isBucketExists(bucketName) {
     
     return [200, result]
   } catch (err) {
-    console.log(`isBucketExists ${err}`);
     throw {
       exitCode: 500,
       message: err.message

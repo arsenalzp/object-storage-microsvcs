@@ -1,5 +1,6 @@
 const { DB_HOST, DB_PORT } = process.env;
-
+// const DB_HOST = 'localhost';
+// const DB_PORT = 27017;
 const URL = `mongodb://${DB_HOST}:${DB_PORT}`;
 
 const { MongoClient, GridFSBucket } = require('mongodb');
@@ -8,13 +9,18 @@ const options = {
   maxPoolSize: 200
 }
 
+let connection = null;
 
 const mongoClient = new MongoClient(URL, options);
 exports.client = async () => { 
   try {
-    return await mongoClient.connect() 
+    if (!connection) {
+      connection = await mongoClient.connect();
+      return connection
+    }
+    return connection
   } catch(err) {
-    console.log(err)
+    throw err
   }
 }
 

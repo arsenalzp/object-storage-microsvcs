@@ -1,23 +1,15 @@
 'use strict'
-
-const { PUT_SERVICE_HOST, PUT_SERVICE_PORT } = process.env;
-// const PUT_SERVICE_HOST = 'localhost';
-// const PUT_SERVICE_PORT = 8101;
-
 const HEADERS = {'Content-Type': 'application/json'};
-const http2 = require('http2');
-
 const getHeaders = require('../models/get-headers');
+const { PUT_OBJECT_SVC_HOST, PUT_OBJECT_SVC_PORT } = process.env;
 
 const clientCreateBucket = require('../clients/create-bucket');
 const clientPutObjectAcl = require('../clients/put-object-acl');
 const clientPutBucketAcl = require('../clients/put-bucket-acl');
-// const createBucket = require('../services/create-bucket');
-// const putObjectACL = require('../services/put-object-acl');
-// const putBucketACL = require('../services/put-bucket-acl');
-// const putObject = require('../services/put-object');
+
+const http = require('http');
+
 const User = require('../models/user');
-const { Stream } = require('stream');
 
 const user = new User();
 user.setUserId();
@@ -95,8 +87,10 @@ async function put(req, res) {
        * invoke putBucketACL service
        * to put a new ACLs for the bucket
        */
-      const [statusCode, targetUserId, targetGrants] = getHeaders(req);
+      const [statusCode, targetUserId, rawTargetGrants] = getHeaders(req);
       if (statusCode !== 200) return res.status(statusCode).set(HEADERS).end()
+
+      const targetGrants = JSON.stringify(rawTargetGrants);
 
       clientPutBucketAcl.PutBucketAcl(
         {bucketName, requesterId: userId, targetUserId, targetGrants},
@@ -117,46 +111,27 @@ async function put(req, res) {
       // if file property if null - set status code 400
       if (!req.file) return res.status(400).set(HEADERS).end();
       
-      // connect to remote service and instantiate HTTP/2 session
-      const client = http2.connect(`http://${PUT_SERVICE_HOST}:${PUT_SERVICE_PORT}`);
-      console.log();
-      client.on('error', (err) => {throw err});
-
       const { buffer: fileBuffer } = req.file;
 
-      // instantiate HTTP/2 stream by requesting remote URL
-      const serviceResp = client.request({
-        ':path': `/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`,
-        ':method' : 'POST'
-      });
+      const rq = http.request({
+        port: PUT_OBJECT_SVC_PORT,
+        host: PUT_OBJECT_SVC_HOST,
+        method: 'POST',
+        path: `/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`,
+      }, (rs) => {
+        rs.read()
+        res.statusCode = rs.statusCode
+        return res.end()
+      })
+      rq.write(fileBuffer)
+      rq.end()
 
-      serviceResp.on('response', (headers) => {
-        return res
-        .status(headers[':status'])
-        .end()
-      });
-
-      serviceResp.on('ready', () => {
-        serviceResp.write(fileBuffer)
-        serviceResp.end()
-      });
-
-      serviceResp.on('close', () => {
-        console.log('Closed');
-        client.close()
-      });
-
-      serviceResp.on('error', () => {
-        return res
-        .status(500)
-        .end()
-      });
     } else {
       /**
        * if services didn't match
        * set status code 405
        */
-
+      console.log(err);
       return res
       .status(405)
       .set(HEADERS)
@@ -164,6 +139,7 @@ async function put(req, res) {
     }
   } catch (err) {
     // need to put error into a journal
+    console.log(err);
     return res
     .status(500)
     .set(HEADERS)

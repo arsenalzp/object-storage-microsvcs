@@ -1,6 +1,5 @@
-FROM node:14-alpine
+FROM node:16-alpine
 WORKDIR /app
 COPY . .
 RUN npm install
-EXPOSE 8101/tcp
 CMD ["node", "./index.js"]
