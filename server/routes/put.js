@@ -1,15 +1,13 @@
 'use strict'
 const HEADERS = {'Content-Type': 'application/json'};
-const getHeaders = require('../models/get-headers');
 const { PUT_OBJECT_SVC_HOST, PUT_OBJECT_SVC_PORT } = process.env;
 
 const clientCreateBucket = require('../clients/create-bucket');
 const clientPutObjectAcl = require('../clients/put-object-acl');
 const clientPutBucketAcl = require('../clients/put-bucket-acl');
-
-const http = require('http');
-
+const getHeaders = require('../models/get-headers');
 const User = require('../models/user');
+const http = require('http');
 
 const user = new User();
 user.setUserId();
@@ -30,24 +28,28 @@ user.setUserId();
 async function put(req, res) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
   const objectName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
-  const key = req.query.key; // retrieve the API key
+  // const key = req.query.key; // retrieve the API key
   const aclMethod = req.query.acl ? req.query.acl : null; // retrieve acl query param
 
-  if (!key) {
+  // if (!key) {
 
-    return res
-    .status(422)
-    .set(HEADERS)
-    .end()
-  }
-
-  const userId = user.getUserId(key);
-
-  if (!userId) {
-    return res.status(401).set(HEADERS).end();
-  }
-
+  //   return res
+  //   .status(422)
+  //   .set(HEADERS)
+  //   .end()
+  // }
   try {
+    // retrieve the Authorization signature
+    const [{Authorization: key}, statusCode] = getHeaders(req, 'Authorization'); 
+    if (statusCode != 200) return res.status(422).set(HEADERS).end();
+
+    const userId = user.getUserId(key);
+
+    if (!userId) {
+      return res.status(401).set(HEADERS).end();
+    }
+
+
     if (bucketName && !objectName && !aclMethod) {    
       /**
        * bucketName is defined, objectName, aclMethod are null
@@ -69,9 +71,10 @@ async function put(req, res) {
        * invoke putObjectACL
        * to put a new ACLs for the object in the bucket
        */
-      const [statusCode, targetUserId, targetGrants] = getHeaders(req);
+      const [headers, statusCode] = getHeaders(req, 'x-amz-acl', 'targetUserId');
       if (statusCode !== 200) return res.status(statusCode).set(HEADERS).end()
-  
+      
+      const {targetGrants, targetUserId } = headers
       clientPutObjectAcl.PutObjectAcl(
         {bucketName, objectName, requesterId: userId, targetUserId, targetGrants},
         (err, resp) => {
@@ -87,13 +90,17 @@ async function put(req, res) {
        * invoke putBucketACL service
        * to put a new ACLs for the bucket
        */
-      const [statusCode, targetUserId, rawTargetGrants] = getHeaders(req);
+      // const [targetUserId, rawTargetGrants, statusCode] = getHeaders(req);
+      const [headers, statusCode] = getHeaders(req, 'x-amz-acl', 'targetUserId');
       if (statusCode !== 200) return res.status(statusCode).set(HEADERS).end()
 
-      const targetGrants = JSON.stringify(rawTargetGrants);
+      const {targetGrants, targetUserId } = headers;
+      if (!targetGrants || !targetUserId) return res.status(400).set(HEADERS).end()
+      
+      const serializedGrants = JSON.stringify(targetGrants); // gRPC requires strings
 
       clientPutBucketAcl.PutBucketAcl(
-        {bucketName, requesterId: userId, targetUserId, targetGrants},
+        {bucketName, requesterId: userId, targetUserId, targetGrants: serializedGrants},
         (err, resp) => {
           if (err) throw err
 
