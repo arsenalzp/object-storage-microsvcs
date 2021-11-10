@@ -1,7 +1,7 @@
 'use strict'
 
 const { SERVICE_PORT } = process.env;
-
+// const SERVICE_PORT = 7001
 const bucket = require('./models/bucket');
 
 const cwd = require('process').cwd();

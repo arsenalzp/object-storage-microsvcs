@@ -1,5 +1,8 @@
 const cwd = require("process").cwd();
 const { PUT_BUCKET_ACL_SVC_HOST, PUT_BUCKET_ACL_SVC_PORT } = process.env;
+// const PUT_BUCKET_ACL_SVC_HOST = 'localhost';
+// const PUT_BUCKET_ACL_SVC_PORT = 7001;
+
 const PROTO_PATH = cwd + '/clients/put-bucket-acl/index.proto';
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require('@grpc/proto-loader');

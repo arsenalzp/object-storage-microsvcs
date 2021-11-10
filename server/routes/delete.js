@@ -2,9 +2,9 @@
 
 const HEADERS = {'Content-Type': 'application/json'};
 
-const User = require('../models/user');
 const clientDeleteKey = require('../clients/delete-key');
-// const deleteKey = require('../services/delete-key');
+const getHeaders = require('../models/get-headers');
+const User = require('../models/user');
 
 const user = new User();
 user.setUserId();
@@ -21,24 +21,20 @@ user.setUserId();
 async function del(req, res) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
   const objectName = req.params.fileName; // retrieve a file name
-  const key = req.query.key; // retrieve the API key
 
-  // Is key provided? If no, respond 422 
-  if (!key) {
-    return res
-    .status(422)
-    .end();
-  }
-
-  const userId = user.getUserId(key);
-
-  if (!userId) {
-    return res
-    .status(401)
-    .end();
-  }
-  
   try {
+    // retrieve the Authorization signature
+    const [{Authorization: key}, statusCode] = getHeaders(req, 'Authorization');
+    if (statusCode != 200) return res.status(422).set(HEADERS).end();
+    
+    const userId = user.getUserId(key);
+
+    if (!userId) {
+      return res
+      .status(401)
+      .end();
+    }
+
     /**
      * invoke deleteKey service
      * to delete the object from the bucket

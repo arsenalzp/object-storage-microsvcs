@@ -1,42 +1,62 @@
 'use strict'
 
-function getHeaders(req) {
-  const userId = req.get('id');
-  const xAmzAcl = req.get('x-amz-acl');
-  
-  console.log(req.headers);
-
-  if (!userId) {
-    return [400] // MissingSecurityHeader
-  } else if (!xAmzAcl) {
-    return [400] // MissingSecurityHeader
-  }
-
-  const headersArray = xAmzAcl.split(',');
-  let grants = {};
+function _parseAcl(args) {
+  const headersArray = args.split(',');
+  let acl = {};
 
   for (let [i, v] of headersArray.entries()) {
     const item = v.split('=');
     let [key, val] = item; 
     key = key.trim(); val = val.trim();
-
+    
     if (key !== 'put' && key !== 'get' && key !== 'del') {
-      return [400] // InvalidArgument
+      return [null, 400] // invalidArgument
     }
 
     if (val !== 'true' && val !== 'false') {
-      return [400] // InvalidArgument
+      return [null, 400] // invalidArgument
     }
 
-    Object.defineProperty(grants, key, { 
+    Object.defineProperty(acl, key, { 
       value: val,
       writable: true,
       enumerable: true
     })
   }
 
-  return [200, userId, grants]
-
+  return [acl, 200]
 }
+
+function getHeaders(req, ...headersList) {
+  const headers = {};
+  
+  for (const h of headersList) {
+    if (h === 'x-amz-acl') {
+      const [acl, statusCode] = _parseAcl(req.get('x-amz-acl'));
+
+      if (statusCode != 200) return [null, statusCode] // invalid argument
+      
+      Object.defineProperty(headers, 'targetGrants', {
+        value: acl,
+        writable: true,
+        enumerable: true
+      })
+      continue
+    }
+    Object.defineProperty(headers, h, {
+      value: req.get(h),
+      writable: true,
+      enumerable: true
+    })
+  }
+
+  return [headers, 200]
+}
+
+/**
+function setHeaders(req, headers) {
+  return req
+}
+*/
 
 module.exports = getHeaders;

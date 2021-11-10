@@ -7,7 +7,7 @@ const clientGetListObjects = require('../clients/get-list-objects');
 const clistnGetListBuckets = require('../clients/get-list-buckets');
 const clientGetObjectAcl = require('../clients/get-object-acl');
 const clientGetObject = require('../clients/get-object');
-
+const getHeaders = require('../models/get-headers');
 const User = require('../models/user');
 
 const user = new User();
@@ -31,24 +31,20 @@ async function get(req, res) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
   const objectName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
   const aclMethod = req.query.acl ? req.query.acl : null; // retrieve acl query param
-  const key = req.query.key; // retrieve the API key
-
-
-  if (!key) {
-    return res
-    .status(422)
-    .end();
-  }
-
-  const userId = user.getUserId(key);
-
-  if (!userId) {
-    return res
-    .status(401)
-    .end(JSON.stringify({body: 'Key is not authenticated'}));
-  }
 
   try {
+    // retrieve the Authorization signature
+    const [{Authorization: key}, statusCode] = getHeaders(req, 'Authorization'); 
+    if (statusCode != 200) return res.status(422).set(HEADERS).end();
+
+    const userId = user.getUserId(key);
+
+    if (!userId) {
+      return res
+      .status(401)
+      .end();
+    }
+
     if (!bucketName && !aclMethod) {
       /** 
        * bucketName, aclMethod are null
