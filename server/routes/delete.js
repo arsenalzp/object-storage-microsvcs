@@ -1,9 +1,6 @@
 'use strict'
 
-const HEADERS = {'Content-Type': 'application/json'};
-
 const clientDeleteKey = require('../clients/delete-key');
-const getHeaders = require('../models/get-headers');
 const User = require('../models/user');
 
 const user = new User();
@@ -21,19 +18,12 @@ user.setUserId();
 async function del(req, res) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
   const objectName = req.params.fileName; // retrieve a file name
+  const key = req.key; // Authorization signature
 
-  try {
-    // retrieve the Authorization signature
-    const [{Authorization: key}, statusCode] = getHeaders(req, 'Authorization');
-    if (statusCode != 200) return res.status(422).set(HEADERS).end();
-    
+  try { 
     const userId = user.getUserId(key);
 
-    if (!userId) {
-      return res
-      .status(401)
-      .end();
-    }
+    if (!userId) return res.status(401).end();
 
     /**
      * invoke deleteKey service
@@ -45,15 +35,13 @@ async function del(req, res) {
         if (err) throw err
 
         const {statusCode} = resp;
-        return res.status(statusCode).set(HEADERS).end()
+
+        return res.status(statusCode).end()
       }
     );
   } catch (err) {
     // need to put error into a journal
-    return res
-    .status(500)
-    .set(HEADERS)
-    .end()
+    return res.status(500).end()
   }
 }
 

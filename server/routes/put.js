@@ -1,11 +1,10 @@
 'use strict'
-const HEADERS = {'Content-Type': 'application/json'};
+
 const { PUT_OBJECT_SVC_HOST, PUT_OBJECT_SVC_PORT } = process.env;
 
 const clientCreateBucket = require('../clients/create-bucket');
 const clientPutObjectAcl = require('../clients/put-object-acl');
 const clientPutBucketAcl = require('../clients/put-bucket-acl');
-const getHeaders = require('../models/get-headers');
 const User = require('../models/user');
 const http = require('http');
 
@@ -28,27 +27,13 @@ user.setUserId();
 async function put(req, res) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
   const objectName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
-  // const key = req.query.key; // retrieve the API key
   const aclMethod = req.query.acl ? req.query.acl : null; // retrieve acl query param
+  const key = req.key; // Authorization signature
 
-  // if (!key) {
-
-  //   return res
-  //   .status(422)
-  //   .set(HEADERS)
-  //   .end()
-  // }
   try {
-    // retrieve the Authorization signature
-    const [{Authorization: key}, statusCode] = getHeaders(req, 'Authorization'); 
-    if (statusCode != 200) return res.status(422).set(HEADERS).end();
-
     const userId = user.getUserId(key);
 
-    if (!userId) {
-      return res.status(401).set(HEADERS).end();
-    }
-
+    if (!userId) return res.status(401).end();
 
     if (bucketName && !objectName && !aclMethod) {    
       /**
@@ -62,7 +47,8 @@ async function put(req, res) {
           if (err) throw err
           
           const { statusCode } = resp;
-          return res.status(statusCode).set(HEADERS).end()
+
+          return res.status(statusCode).end()
         }
       );
     } else if (bucketName && objectName && aclMethod) {
@@ -71,17 +57,22 @@ async function put(req, res) {
        * invoke putObjectACL
        * to put a new ACLs for the object in the bucket
        */
-      const [headers, statusCode] = getHeaders(req, 'x-amz-acl', 'targetUserId');
-      if (statusCode !== 200) return res.status(statusCode).set(HEADERS).end()
-      
-      const {targetGrants, targetUserId } = headers
+
+      const targetGrants = req.acl;
+      const targetUserId = req.targetUserId;
+
+      if (!targetGrants || !targetUserId) return res.status(400).end()
+
+      const serializedGrants = JSON.stringify(targetGrants); // gRPC requires strings
+
       clientPutObjectAcl.PutObjectAcl(
-        {bucketName, objectName, requesterId: userId, targetUserId, targetGrants},
+        {bucketName, objectName, requesterId: userId, targetUserId, targetGrants: serializedGrants},
         (err, resp) => {
           if (err) throw err
 
           const { statusCode } = resp;
-          return res.status(statusCode).set(HEADERS).end()
+
+          return res.status(statusCode).end()
         }
       );
     } else if (bucketName && !objectName && aclMethod) {
@@ -90,12 +81,10 @@ async function put(req, res) {
        * invoke putBucketACL service
        * to put a new ACLs for the bucket
        */
-      // const [targetUserId, rawTargetGrants, statusCode] = getHeaders(req);
-      const [headers, statusCode] = getHeaders(req, 'x-amz-acl', 'targetUserId');
-      if (statusCode !== 200) return res.status(statusCode).set(HEADERS).end()
+      const targetGrants = req.acl;
+      const targetUserId = req.targetUserId;
 
-      const {targetGrants, targetUserId } = headers;
-      if (!targetGrants || !targetUserId) return res.status(400).set(HEADERS).end()
+      if (!targetGrants || !targetUserId) return res.status(400).end()
       
       const serializedGrants = JSON.stringify(targetGrants); // gRPC requires strings
 
@@ -105,7 +94,8 @@ async function put(req, res) {
           if (err) throw err
 
           const { statusCode } = resp;
-          return res.status(statusCode).set(HEADERS).end()
+
+          return res.status(statusCode).end()
         }
       );
     } else if (bucketName && objectName && !aclMethod) {
@@ -116,7 +106,7 @@ async function put(req, res) {
        */
 
       // if file property if null - set status code 400
-      if (!req.file) return res.status(400).set(HEADERS).end();
+      if (!req.file) return res.status(400).end();
       
       const { buffer: fileBuffer } = req.file;
 
@@ -127,7 +117,8 @@ async function put(req, res) {
         path: `/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`,
       }, (rs) => {
         rs.read()
-        res.statusCode = rs.statusCode
+        res.statusCode = rs.statusCode;
+
         return res.end()
       })
       rq.write(fileBuffer)
@@ -138,19 +129,11 @@ async function put(req, res) {
        * if services didn't match
        * set status code 405
        */
-      console.log(err);
-      return res
-      .status(405)
-      .set(HEADERS)
-      .end();
+      return res.status(405).end();
     }
   } catch (err) {
     // need to put error into a journal
-    console.log(err);
-    return res
-    .status(500)
-    .set(HEADERS)
-    .end();
+    return res.status(500).end();
   }
 }
 

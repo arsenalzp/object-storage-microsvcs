@@ -1,13 +1,10 @@
 'use strict'
 
-const HEADERS = {'Content-Type': 'application/json'};
-
 const clientGetBucketAcl = require('../clients/get-bucket-acl');
 const clientGetListObjects = require('../clients/get-list-objects');
 const clistnGetListBuckets = require('../clients/get-list-buckets');
 const clientGetObjectAcl = require('../clients/get-object-acl');
 const clientGetObject = require('../clients/get-object');
-const getHeaders = require('../models/get-headers');
 const User = require('../models/user');
 
 const user = new User();
@@ -31,19 +28,12 @@ async function get(req, res) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
   const objectName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
   const aclMethod = req.query.acl ? req.query.acl : null; // retrieve acl query param
+  const key = req.key; // Authorization signature
 
   try {
-    // retrieve the Authorization signature
-    const [{Authorization: key}, statusCode] = getHeaders(req, 'Authorization'); 
-    if (statusCode != 200) return res.status(422).set(HEADERS).end();
-
     const userId = user.getUserId(key);
 
-    if (!userId) {
-      return res
-      .status(401)
-      .end();
-    }
+    if (!userId) return res.status(401).end();
 
     if (!bucketName && !aclMethod) {
       /** 
@@ -57,10 +47,8 @@ async function get(req, res) {
           if (err) throw err
 
           const { statusCode, buckets } = resp;
-          return res
-          .status(statusCode)
-          .set(HEADERS)
-          .end(buckets)
+
+          return res.status(statusCode).end(buckets)
         }
       )
     } else if (bucketName && !objectName && !aclMethod) {
@@ -76,10 +64,7 @@ async function get(req, res) {
 
           const {statusCode, objects} = resp;
 
-          return res
-          .status(statusCode)
-          .set(HEADERS)
-          .end(objects)
+          return res.status(statusCode).end(objects)
         }
       )
     } else if (bucketName && objectName && !aclMethod) {
@@ -99,9 +84,7 @@ async function get(req, res) {
 
       // The 'response' event is emitted when a response HEADERS frame has been received for this stream from the connected HTTP/2 server. 
       serviceResp.on('response', (headers) => {
-        res
-        .set(HEADERS)
-        .status(headers[':status'])
+        res.status(headers[':status'])
 
         return serviceResp.pipe(res)
       });
@@ -111,9 +94,7 @@ async function get(req, res) {
       });
 
       serviceResp.on('error', () => {
-        return res
-        .status(500)
-        .end()
+        return res.status(500).end()
       });
     } else if (bucketName && objectName && aclMethod) {
       /**
@@ -127,10 +108,8 @@ async function get(req, res) {
           if (err) throw err
 
           const { statusCode, grants } = resp;
-          return res
-          .status(statusCode)
-          .set(HEADERS)
-          .end(grants)
+          
+          return res.status(statusCode).end(grants)
         }
       )
     } else if (bucketName && !objectName && aclMethod) {
@@ -145,10 +124,8 @@ async function get(req, res) {
           if (err) throw err
 
           const { statusCode, grants } = resp;
-          return res
-          .status(statusCode)
-          .set(HEADERS)
-          .end(grants)
+
+          return res.status(statusCode).end(grants)
         }
       )
     } else {
@@ -157,17 +134,11 @@ async function get(req, res) {
        * set status code 405
        */
 
-      return res
-      .status(405)
-      .set(HEADERS)
-      .end();
+      return res.status(405).end();
     }
   } catch(err) {
     // need to put error into a journal
-    return res
-    .status(500)
-    .set(HEADERS)
-    .end();
+    return res.status(500).end();
   }
 }
 
