@@ -24,7 +24,7 @@ user.setUserId();
  * @param {Object} res HTTP response
  * @returns {Object} HTTP response or Error
  */
-async function get(req, res) {
+async function get(req, res, next) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
   const objectName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
   const aclMethod = req.query.acl ? req.query.acl : null; // retrieve acl query param
@@ -33,7 +33,11 @@ async function get(req, res) {
   try {
     const userId = user.getUserId(key);
 
-    if (!userId) return res.status(401).end();
+    if (!userId) {
+      const err = new Error('Unauthorized')
+      err.statusCode = 401
+      return next(err)
+    }
 
     if (!bucketName && !aclMethod) {
       /** 
@@ -44,8 +48,12 @@ async function get(req, res) {
       clistnGetListBuckets.GetListBuckets(
         {userId},
         (err, resp) => {
-          if (err) throw err
 
+          if (err) {
+            err.statusCode = 500;
+            return next(err)
+          }
+          
           const { statusCode, buckets } = resp;
 
           return res.status(statusCode).end(buckets)
@@ -57,13 +65,18 @@ async function get(req, res) {
        * invoke getListObjects service
        * to get list of objects from the bucket
        */
+
       clientGetListObjects.GetListObjects(
         {bucketName, userId},
         (err, resp) => {
-          if (err) throw err
+
+          if (err) {
+            err.statusCode = 500;
+            return next(err)
+          }
 
           const {statusCode, objects} = resp;
-
+          
           return res.status(statusCode).end(objects)
         }
       )
@@ -75,7 +88,10 @@ async function get(req, res) {
        */
       // connect to remote service and instantiate HTTP/2 session
       const session = clientGetObject.connect();
-      session.on('error', (err) => {throw err});
+      session.on('error', (err) => { 
+        err.statusCode = 500;
+        return next(err)
+      });
 
       // instantiate HTTP/2 stream by requesting remote URL
       const serviceResp = session.request({
@@ -93,8 +109,9 @@ async function get(req, res) {
         session.close()
       });
 
-      serviceResp.on('error', () => {
-        return res.status(500).end()
+      serviceResp.on('error', (err) => { 
+        err.statusCode = 500;
+        return next(err)
       });
     } else if (bucketName && objectName && aclMethod) {
       /**
@@ -105,7 +122,11 @@ async function get(req, res) {
       clientGetObjectAcl.GetObjectAcl(
         {bucketName, objectName, userId},
         (err, resp) => {
-          if (err) throw err
+
+          if (err) {
+            err.statusCode = 500;
+            return next(err)
+          }
 
           const { statusCode, grants } = resp;
           
@@ -121,7 +142,11 @@ async function get(req, res) {
       clientGetBucketAcl.GetBucketAcl(
         { bucketName, userId },
         (err, resp) => {
-          if (err) throw err
+
+          if (err) {
+            err.statusCode = 500;
+            return next(err)
+          }
 
           const { statusCode, grants } = resp;
 
@@ -133,12 +158,14 @@ async function get(req, res) {
        * if services didn't match
        * set status code 405
        */
-
-      return res.status(405).end();
+      const err = new Error('MethodNotAllowed')
+      err.statusCode = 405
+      return next(err)
     }
   } catch(err) {
-    // need to put error into a journal
-    return res.status(500).end();
+    err.type = 'routes';
+    err.statusCode = 500;
+    next(err)
   }
 }
 

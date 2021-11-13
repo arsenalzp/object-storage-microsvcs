@@ -18,7 +18,7 @@ user.setUserId();
  * @param {Object} res HTTP response
  * @returns {Object} HTTP response or Error
  */
-async function head(req, res) {
+async function head(req, res, next) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
   const objectName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
   const key = req.key; // Authorization signature
@@ -26,7 +26,11 @@ async function head(req, res) {
   try {
     const userId = user.getUserId(key);
 
-    if (!userId) return res.status(401).end()
+    if (!userId) {
+      const err = new Error('Unauthorized')
+      err.statusCode = 401
+      return next(err)
+    }
 
     if (bucketName && !objectName) {
       /**
@@ -37,7 +41,11 @@ async function head(req, res) {
       clientGetBucketMeta.GetBucketMeta(
         {bucketName, userId},
         (err, resp) => {
-          if (err) throw err
+
+          if (err) {
+            err.statusCode = 500;
+            return next(err)
+          }
 
           const { statusCode } = resp;
 
@@ -53,7 +61,11 @@ async function head(req, res) {
       clientGetObjectMeta.GetObjectMeta(
         {bucketName, objectName, userId},
         (err, resp) => {
-          if (err) throw err
+
+          if (err) {
+            err.statusCode = 500;
+            return next(err)
+          }
 
           const { statusCode } = resp;
 
@@ -62,10 +74,10 @@ async function head(req, res) {
       )
     }
   } catch (err) {
-    // need to put error into a journal
-    return res.status(500).end();
+    err.type = 'routes';
+    err.statusCode = 500;
+    next(err)
   }
-  
 }
 
 module.exports = head;

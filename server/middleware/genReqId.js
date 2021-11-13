@@ -10,7 +10,8 @@ function genReqId(req, res, next) {
 
     next() 
   } catch (err) {
-    return res.status(500).end()
+    err.type = 'middleware';
+    next(err)
   }
 }
 

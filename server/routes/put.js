@@ -24,7 +24,7 @@ user.setUserId();
  * @param {Object} res HTTP response
  * @returns {Object} HTTP response or Error
  */
-async function put(req, res) {
+async function put(req, res, next) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
   const objectName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
   const aclMethod = req.query.acl ? req.query.acl : null; // retrieve acl query param
@@ -33,7 +33,11 @@ async function put(req, res) {
   try {
     const userId = user.getUserId(key);
 
-    if (!userId) return res.status(401).end();
+    if (!userId) {
+      const err = new Error('Unauthorized')
+      err.statusCode = 401
+      return next(err)
+    }
 
     if (bucketName && !objectName && !aclMethod) {    
       /**
@@ -44,7 +48,11 @@ async function put(req, res) {
       clientCreateBucket.CreateBucket(
         {bucketName, userId},
         (err, resp) => {
-          if (err) throw err
+
+          if (err) {
+            err.statusCode = 500;
+            return next(err)
+          }
           
           const { statusCode } = resp;
 
@@ -61,20 +69,29 @@ async function put(req, res) {
       const targetGrants = req.acl;
       const targetUserId = req.targetUserId;
 
-      if (!targetGrants || !targetUserId) return res.status(400).end()
+      if (!targetGrants || !targetUserId) {
+        const err = new Error('InvalidArgument')
+        err.statusCode = 400;
+        return next(err)
+      }
 
       const serializedGrants = JSON.stringify(targetGrants); // gRPC requires strings
 
       clientPutObjectAcl.PutObjectAcl(
         {bucketName, objectName, requesterId: userId, targetUserId, targetGrants: serializedGrants},
         (err, resp) => {
-          if (err) throw err
+
+          if (err) {
+            err.statusCode = 500;
+            return next(err)
+          }
 
           const { statusCode } = resp;
 
           return res.status(statusCode).end()
         }
       );
+
     } else if (bucketName && !objectName && aclMethod) {
       /**
        * bucketName, aclMethod are defned, objectName is null
@@ -84,14 +101,22 @@ async function put(req, res) {
       const targetGrants = req.acl;
       const targetUserId = req.targetUserId;
 
-      if (!targetGrants || !targetUserId) return res.status(400).end()
+      if (!targetGrants || !targetUserId) {
+        const err = new Error('InvalidArgument')
+        err.statusCode = 400;
+        return next(err)
+      }
       
       const serializedGrants = JSON.stringify(targetGrants); // gRPC requires strings
 
       clientPutBucketAcl.PutBucketAcl(
         {bucketName, requesterId: userId, targetUserId, targetGrants: serializedGrants},
         (err, resp) => {
-          if (err) throw err
+
+          if (err) {
+            err.statusCode = 500;
+            return next(err)
+          }
 
           const { statusCode } = resp;
 
@@ -106,7 +131,11 @@ async function put(req, res) {
        */
 
       // if file property if null - set status code 400
-      if (!req.file) return res.status(400).end();
+      if (!req.file) {
+        const err = new Error('InvalidArgument')
+        err.statusCode = 400;
+        return next(err)
+      }
       
       const { buffer: fileBuffer } = req.file;
 
@@ -124,16 +153,23 @@ async function put(req, res) {
       rq.write(fileBuffer)
       rq.end()
 
+      rq.on('error', (err) => {
+        err.statusCode = 500;
+        return next(err)
+      })
     } else {
       /**
        * if services didn't match
        * set status code 405
        */
-      return res.status(405).end();
+       const err = new Error('MethodNotAllowed')
+       err.statusCode = 405
+       return next(err)
     }
   } catch (err) {
-    // need to put error into a journal
-    return res.status(500).end();
+    err.type = 'routes';
+    err.statusCode = 500;
+    next(err)
   }
 }
 

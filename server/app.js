@@ -15,6 +15,7 @@ const del = require('./routes/delete');
 // Import middlewares
 const getHeaders = require('./middleware/getHeaders');
 const genReqId = require('./middleware/genReqId');
+const errorHandler = require('./middleware/errorHandler');
 
 // Create new memory storage for multer
 const storage = multer.memoryStorage()
@@ -60,6 +61,8 @@ app.put('/:bucketId/:fileName', put)
 
 // DELETE routes
 app.delete('/:bucketId/:fileName', del);
+
+app.use(errorHandler);
 
 app.listen(APP_PORT, () => {
 	console.log(`Listening on ${APP_PORT} port`);
