@@ -11,7 +11,10 @@ const put = require('./routes/put');
 const get = require('./routes/get');
 const head = require('./routes/head');
 const del = require('./routes/delete');
+
+// Import middlewares
 const getHeaders = require('./middleware/getHeaders');
+const genReqId = require('./middleware/genReqId');
 
 // Create new memory storage for multer
 const storage = multer.memoryStorage()
@@ -24,6 +27,7 @@ const app = express();
 app.disable('x-powered-by');
 
 app.use(getHeaders);
+app.use(genReqId);
 
 app.all('/:bucketId/:fileName', (req, res, next) => {
   // Set CORS headers
