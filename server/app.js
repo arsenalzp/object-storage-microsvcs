@@ -1,7 +1,7 @@
 'use strict'
 
 const { APP_PORT } = process.env;
-//const APP_PORT = 8080
+// const APP_PORT = 8080
 
 const express = require('express');
 const multer = require('multer');
@@ -11,6 +11,7 @@ const put = require('./routes/put');
 const get = require('./routes/get');
 const head = require('./routes/head');
 const del = require('./routes/delete');
+const getHeaders = require('./middleware/getHeaders');
 
 // Create new memory storage for multer
 const storage = multer.memoryStorage()
@@ -21,6 +22,8 @@ const app = express();
 
 // Disable X-Powered-By header
 app.disable('x-powered-by');
+
+app.use(getHeaders);
 
 app.all('/:bucketId/:fileName', (req, res, next) => {
   // Set CORS headers

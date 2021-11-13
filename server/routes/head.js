@@ -1,10 +1,7 @@
 'use strict'
 
-const HEADERS = {'Content-Type': 'application/json'};
-
 const clientGetBucketMeta = require('../clients/get-bucket-meta');
 const clientGetObjectMeta = require('../clients/get-object-meta');
-const getHeaders = require('../models/get-headers');
 const User = require('../models/user');
 
 const user = new User();
@@ -24,19 +21,12 @@ user.setUserId();
 async function head(req, res) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
   const objectName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
+  const key = req.key; // Authorization signature
   
   try {
-    // retrieve the Authorization signature
-    const [{Authorization: key}, statusCode] = getHeaders(req, 'Authorization'); 
-    if (statusCode != 200) return res.status(422).set(HEADERS).end();
-
     const userId = user.getUserId(key);
 
-    if (!userId) {
-      return res
-      .status(401)
-      .end(JSON.stringify({body: 'Key is not authenticated'}));
-    }
+    if (!userId) return res.status(401).end()
 
     if (bucketName && !objectName) {
       /**
@@ -51,10 +41,7 @@ async function head(req, res) {
 
           const { statusCode } = resp;
 
-          return res
-          .set(HEADERS)
-          .status(statusCode)
-          .end()
+          return res.status(statusCode).end()
         }
       )
     } else {
@@ -69,19 +56,14 @@ async function head(req, res) {
           if (err) throw err
 
           const { statusCode } = resp;
-          return res
-          .set(HEADERS)
-          .status(statusCode)
-          .end()
+
+          return res.status(statusCode).end()
         }
       )
     }
   } catch (err) {
     // need to put error into a journal
-    return res
-    .status(500)
-    .set(HEADERS)
-    .end();
+    return res.status(500).end();
   }
   
 }
