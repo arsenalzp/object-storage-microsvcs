@@ -1,9 +1,9 @@
 'use strict'
 
-// const { APP_PORT } = process.env;
-const APP_PORT = 8080
-// const { LOGS_PATH } = process.env;
-const LOGS_PATH = './logs';
+const { APP_PORT } = process.env;
+// const APP_PORT = 8080
+const { LOGS_PATH } = process.env;
+// const LOGS_PATH = './logs';
 
 const path = require('path');
 const express = require('express');
