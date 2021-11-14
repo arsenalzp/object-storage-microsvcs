@@ -1,10 +1,14 @@
 'use strict'
 
-const { APP_PORT } = process.env;
-// const APP_PORT = 8080
+// const { APP_PORT } = process.env;
+const APP_PORT = 8080
+// const { LOGS_PATH } = process.env;
+const LOGS_PATH = './logs';
 
+const path = require('path');
 const express = require('express');
 const multer = require('multer');
+const winston = require('winston');
 
 // Import routes
 const put = require('./routes/put');
@@ -16,17 +20,39 @@ const del = require('./routes/delete');
 const getHeaders = require('./middleware/getHeaders');
 const genReqId = require('./middleware/genReqId');
 const errorHandler = require('./middleware/errorHandler');
+const logRequest = require('./middleware/logRequest');
 
 // Create new memory storage for multer
 const storage = multer.memoryStorage()
 const upload = multer({storage: storage})
 
-// Init Express
+// Init express
 const app = express();
+
+// Init winston logger
+const logConfiguration = {
+	'transports': [
+			new winston.transports.File({
+				level: 'info',
+				filename: path.join(LOGS_PATH, 'access_log')
+			}),
+			new winston.transports.File({
+				level: 'error',
+				filename: path.join(LOGS_PATH, 'errors_log')
+		})
+
+	]
+};
+const logger = winston.createLogger(logConfiguration);
+
 
 // Disable X-Powered-By header
 app.disable('x-powered-by');
 
+app.use((req, res, next, logger) => {
+	console.log('log request');
+	logRequest(req, res, next, logger)
+});
 app.use(getHeaders);
 app.use(genReqId);
 
@@ -62,7 +88,9 @@ app.put('/:bucketId/:fileName', put)
 // DELETE routes
 app.delete('/:bucketId/:fileName', del);
 
-app.use(errorHandler);
+app.use((err, req, res, next) => {
+	errorHandler(err, req, res, next, logger)
+});
 
 app.listen(APP_PORT, () => {
 	console.log(`Listening on ${APP_PORT} port`);

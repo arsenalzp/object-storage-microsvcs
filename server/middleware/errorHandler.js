@@ -1,7 +1,15 @@
-function errorHandler(err, req, res, next) {
+const os = require('os');
+
+function errorHandler(err, req, res, next, logger) {
   const uuid = req.uuid; // retrieve the request ID
-  const statusCode = err.statusCode;
+  const statusCode = err.statusCode ? err.statusCode : 500;
   const message = err.message;
+  const time = new Date();
+  const method = req.method;
+  const path = req.path;
+  const hostname = os.hostname();
+
+  logger.error(`${time.toUTCString()} ${hostname} ${method} ${path} ${uuid} `);
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
   <Error>
