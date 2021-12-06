@@ -9,7 +9,7 @@ function errorHandler(err, req, res, next, logger) {
   const path = req.path;
   const hostname = os.hostname();
 
-  logger.error(`${time.toUTCString()} ${hostname} ${method} ${path} ${uuid} `);
+  logger.error(`${time.toUTCString()} ${hostname} ${method} ${path} ${uuid} ${message}`);
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
   <Error>

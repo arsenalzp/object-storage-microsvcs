@@ -49,12 +49,11 @@ const logger = winston.createLogger(logConfiguration);
 // Disable X-Powered-By header
 app.disable('x-powered-by');
 
-app.use((req, res, next, logger) => {
-	console.log('log request');
-	logRequest(req, res, next, logger)
-});
 app.use(getHeaders);
 app.use(genReqId);
+app.use((req, res, next) => {
+	logRequest(req, res, next, logger)
+});
 
 app.all('/:bucketId/:fileName', (req, res, next) => {
   // Set CORS headers

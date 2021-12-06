@@ -8,7 +8,7 @@ function logRequest(req, res, next, logger) {
     const hostname = os.hostname();
     const uuid = req.uuid;
 
-    logger.info(`${time.toUTCString()} ${hostname} ${method} ${path} ${uuid} `);
+    logger.info(`${time.toUTCString()} ${hostname} ${method} ${path} ${uuid}`);
     
     req.on('error', (err) => {
       next(err)
