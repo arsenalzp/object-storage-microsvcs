@@ -20,8 +20,8 @@ server.on('stream', async (stream, headers) => {
       return stream.end()
     }
 
-    const manageAuth = new Grants(requesterId, 'get', grants);
-    const isAuthorized = manageAuth.check(); // check user grants for certain method
+    const manageAuth = new Grants(requesterId, grants, null, null);
+    const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
     if (!isAuthorized) {
       stream.respond({':status': 403})
       return stream.end()

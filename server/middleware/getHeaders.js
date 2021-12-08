@@ -1,5 +1,9 @@
 'use strict'
 
+const putRegexp = /put=(true$|false$)/i; // regexp for "put=true", "put=false"
+const getRegexp = /get=(true$|false$)/i; // regexp for "get=true" or "get=false"
+const delRegaexp = /del=(true$|false$)/i; // regexp for "del=true" or "del=false"
+
 function _parseAcl(args) {
   if (typeof args !== 'string' || args.length === 0) {
     return [null, 200]
@@ -7,18 +11,25 @@ function _parseAcl(args) {
   const headersArray = args.split(',');
   let acl = {};
 
-  for (let [i, v] of headersArray.entries()) {
+  for (let [_, v] of headersArray.entries()) {
+    if (v.match(putRegexp) === null && 
+        v.match(getRegexp) === null && 
+        v.match(delRegaexp) === null
+    ) {
+      return [null, 400] // invalidArgument
+    }
+
     const item = v.split('=');
     let [key, val] = item; 
     key = key.trim(); val = val.trim();
     
-    if (key !== 'put' && key !== 'get' && key !== 'del') {
-      return [null, 400] // invalidArgument
-    }
+    // if (key !== 'put' && key !== 'get' && key !== 'del') {
+    //   return [null, 400] // invalidArgument
+    // }
 
-    if (val !== 'true' && val !== 'false') {
-      return [null, 400] // invalidArgument
-    }
+    // if (val !== 'true' && val !== 'false') {
+    //   return [null, 400] // invalidArgument
+    // }
 
     Object.defineProperty(acl, key, { 
       value: val,

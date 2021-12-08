@@ -8,8 +8,8 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8001:8001
+  #  ports: 
+  #   - 8001:7001
   
   delete-key:
    build: ./services/delete-key
@@ -18,8 +18,8 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8004:8004
+  #  ports: 
+  #   - 8002:7001
 
   get-bucket-acl:
    build: ./services/get-bucket-acl
@@ -28,8 +28,8 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8005:8005
+  #  ports: 
+  #   - 8003:7001
 
   get-bucket-meta:
    build: ./services/get-bucket-meta
@@ -38,8 +38,8 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8009:8009
+  #  ports: 
+  #   - 8004:7001
 
   get-list-buckets:
    build: ./services/get-list-buckets
@@ -48,8 +48,8 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8008:8008
+  #  ports: 
+  #   - 8005:7001
 
   get-list-objects:
    build: ./services/get-list-objects
@@ -58,8 +58,8 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8007:8007
+  #  ports: 
+  #   - 8006:7001
 
   get-object-acl:
    build: ./services/get-object-acl
@@ -68,8 +68,8 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8006:8006
+  #  ports: 
+  #   - 8007:7001
 
   get-object-meta:
    build: ./services/get-object-meta
@@ -78,8 +78,8 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8010:8010
+  #  ports: 
+  #   - 8008:7001
 
   put-bucket-acl:
    build: ./services/put-bucket-acl
@@ -88,8 +88,8 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8003:8003
+  #  ports: 
+  #   - 8009:7001
 
   put-object-acl:
    build: ./services/put-object-acl
@@ -98,8 +98,8 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8002:8002
+  #  ports: 
+  #   - 8010:7001
 
   get-object:
    build: ./services/get-object
@@ -108,8 +108,8 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8100:8100
+  #  ports: 
+  #   - 8011:7001
   
   put-object:
    build: ./services/put-object
@@ -118,14 +118,16 @@ services:
     SERVICE_PORT: 7001
     DB_HOST: db
     DB_PORT: 27017
-   ports: 
-    - 8101:8101
+  #  ports: 
+  #   - 8012:7001
 
   db:
     image: mongo:4.2.11
-    restart: always
+    restart: always     
     volumes:
       - /data/db_container:/data/db
+    ports:
+     - 27017:27017
   
   app:
    build: ./server
@@ -147,12 +149,12 @@ services:
     GET_OBJECT_ACL_SVC_PORT: 7001
     GET_OBJECT_META_SVC_HOST: get-object-meta
     GET_OBJECT_META_SVC_PORT: 7001
-    GET_OBJECT_SVC_HOST: get-object
-    GET_OBJECT_SVC_PORT: 7001
     PUT_BUCKET_ACL_SVC_HOST: put-bucket-acl
     PUT_BUCKET_ACL_SVC_PORT: 7001
     PUT_OBJECT_ACL_SVC_HOST: put-object-acl
     PUT_OBJECT_ACL_SVC_PORT: 7001
+    GET_OBJECT_SVC_HOST: get-object
+    GET_OBJECT_SVC_PORT: 7001
     PUT_OBJECT_SVC_HOST: put-object
     PUT_OBJECT_SVC_PORT: 7001
     LOGS_PATH: './logs'

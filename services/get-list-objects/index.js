@@ -34,8 +34,8 @@ async function getListObjects({request}, cb) {
     const [_, grants] = await bucket.isBucketExists(bucketName);
     if (!grants) return cb(null, {statusCode:404, objects: null})
 
-    const manageAuth = new Grants(userId, 'get', grants);
-    const isAuthorized = manageAuth.check(); // check user grants for certain method
+    const manageAuth = new Grants(userId, grants, null, null);
+    const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
     if (!isAuthorized) return cb(null, {statusCode:403, objects: null})
 
     const [statusCode, objects]  = await bucket.listObjects(bucketName);

@@ -23,8 +23,8 @@ const httpSrv = http.createServer(async (req, res) => {
       return res.end()
     }
 
-    const manageAuth = new Grants(requesterId, 'put', grants);
-    const isAuthorized = manageAuth.check(); // check user grants for certain method
+    const manageAuth = new Grants(requesterId, grants, null, null);
+    const isAuthorized = manageAuth.checkAccess('put'); // check user grants against PUT method
     if (!isAuthorized) {
       res.statusCode = 403;
       return res.end()

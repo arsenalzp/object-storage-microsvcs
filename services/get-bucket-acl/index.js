@@ -35,8 +35,8 @@ async function getBucketACL({request}, cb) {
       const [_, grants] = await bucket.isBucketExists(bucketName);
       if (!grants) return cb(null, {statusCode: 404, grants: null})
 
-      const manageAuth = new Grants(userId, 'get', grants);
-      const isAuthorized = manageAuth.check(); // check user grants for certain method
+      const manageAuth = new Grants(userId, grants, null, null);
+      const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
       if (!isAuthorized) return cb(null, {statusCode:403, grants: null})
     }
     const [statusCode, grants] = await bucket.getObjectOrBucketACL(bucketName, null);

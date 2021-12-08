@@ -49,7 +49,10 @@ const logger = winston.createLogger(logConfiguration);
 // Disable X-Powered-By header
 app.disable('x-powered-by');
 
+// Retrieve headers from the request
 app.use(getHeaders);
+
+// Generate the uniq ID for incoming request
 app.use(genReqId);
 app.use((req, res, next) => {
 	logRequest(req, res, next, logger)

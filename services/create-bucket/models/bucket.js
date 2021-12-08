@@ -84,11 +84,7 @@ async function createBucket(bucketName, userId) {
       createdAt: new Date(),
       owner: userId,
       grants: [{
-        [userId]: {
-          get: "true",
-          put: "true",
-          del: "true"
-        }
+        [userId]: 7 // bitmask "111"
       }],
       files: []
     })
@@ -213,11 +209,7 @@ async function _createFile(bucketName, fileName, userId, fileBuffer) {
         bucket: bucketName,
         filename: fileName,
         grants: [{
-          [userId]: {
-            get: "true",
-            put: "true",
-            del: "true"
-          }
+          [userId]: 7 // bitmask "111"
         }]
       })
 
@@ -282,11 +274,7 @@ async function _updateFile(bucketName, fileId, fileName, userId, fileBuffer) {
         filename: fileName, 
         bucket: bucketName, 
         grants: [{
-          [userId]: {
-            get: "true",
-            put: "true",
-            del: "true"
-          }
+          [userId]: 7 // bitmask "111"
         }]
         }
       }

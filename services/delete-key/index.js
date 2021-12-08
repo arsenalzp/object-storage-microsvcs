@@ -35,8 +35,8 @@ async function deleteKey({ request }, cb) {
       const [_, grants] = await bucket.isBucketExists(bucketName);
       if (!grants) return cb(null, {statusCode:404})
 
-      const manageAuth = new Grants(userId, 'del', grants);
-      const isAuthorized = manageAuth.check(); // check user grants for certain method
+      const manageAuth = new Grants(userId, grants, null, null);
+      const isAuthorized = manageAuth.checkAccess('del'); // check user grants against DEL method
       if (!isAuthorized) return cb(null, {statusCode:403})
     }
 
