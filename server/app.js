@@ -17,14 +17,18 @@ const head = require('./routes/head');
 const del = require('./routes/delete');
 
 // Import middlewares
-const getHeaders = require('./middleware/getHeaders');
-const genReqId = require('./middleware/genReqId');
-const errorHandler = require('./middleware/errorHandler');
-const logRequest = require('./middleware/logRequest');
+const getHeaders = require('./middleware/headers-getter');
+const genReqId = require('./middleware/reqid-generator');
+const handleError = require('./middleware/error-handler');
+const logRequest = require('./middleware/request-logger');
+const checkParams = require('./middleware/params-ckecker');
 
 // Create new memory storage for multer
 const storage = multer.memoryStorage()
 const upload = multer({storage: storage})
+
+checkParams.fileNameLen(32);
+checkParams.bucketNameLen(16);
 
 // Init express
 const app = express();
@@ -44,7 +48,7 @@ const logConfiguration = {
 	]
 };
 const logger = winston.createLogger(logConfiguration);
-
+// const paramCheck = checker.config()
 
 // Disable X-Powered-By header
 app.disable('x-powered-by');
@@ -74,24 +78,24 @@ app.all('/:bucketId/:fileName', (req, res, next) => {
 })
 
 // HEAD routes
-app.head('/:bucketId', head);
-app.head('/:bucketId/:fileName', head);
+app.head('/:bucketId', checkParams, head);
+app.head('/:bucketId/:fileName', checkParams, head);
 
 // GET routes
 app.get('/', get);
-app.get('/:bucketId', get);
-app.get('/:bucketId/:fileName', get);
+app.get('/:bucketId', checkParams, get);
+app.get('/:bucketId/:fileName', checkParams, get);
 
 // PUT routes
-app.put('/:bucketId/:fileName', upload.single('upload'), put);
-app.put('/:bucketId', put)
-app.put('/:bucketId/:fileName', put)
+app.put('/:bucketId/:fileName', checkParams, upload.single('upload'), put);
+app.put('/:bucketId', checkParams, put)
+app.put('/:bucketId/:fileName', checkParams, put)
 
 // DELETE routes
-app.delete('/:bucketId/:fileName', del);
+app.delete('/:bucketId/:fileName', checkParams, del);
 
 app.use((err, req, res, next) => {
-	errorHandler(err, req, res, next, logger)
+	handleError(err, req, res, next, logger)
 });
 
 app.listen(APP_PORT, () => {

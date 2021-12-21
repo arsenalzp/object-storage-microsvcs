@@ -1,6 +1,8 @@
 'use strict'
 
 const { SERVICE_PORT } = process.env;
+// const SERVICE_PORT = 7002;
+
 const bucket = require('./models/bucket');
 const Grants = require('./utils/check-grants');
 const http2 = require('http2');
