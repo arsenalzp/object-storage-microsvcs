@@ -8,7 +8,7 @@ class ParamsChecker {
       const bNameRgxp = new RegExp(`^[A-Za-z0-9]{3,${this._bNameLen}}$`); // regexp for bucket name
 
       const bucketName = req.params.bucketId; // retrieve a bucket name
-      const objectName = req.params.fileName; // retrieve a object name
+      const objectName = req.params.objectName; // retrieve a object name
       
       /**
        * check bucket name and object name synatx

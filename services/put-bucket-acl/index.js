@@ -34,12 +34,15 @@ async function putBucketACL({ request }, cb) {
   
   try {
     {
-      const [_, bucketGrants] = await bucket.isBucketExists(bucketName);
-      if (!bucketGrants) return cb(null, {statusCode:404})
+    const [_, isExist] = await bucket.isBucketExists(bucketName);
+    if (!isExist) return cb(null, {statusCode:404})
+    }
 
-      manageAuth = new Grants(requesterId, bucketGrants, targetUserId, targetGrants);
-      const isAuthorized = manageAuth.checkAccess('put'); // check user grants against PUT method
-      if (!isAuthorized) return cb(null, {statusCode:403})
+    {
+    const [_, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
+    manageAuth = new Grants(requesterId, grants, targetUserId, targetGrants);
+    const isAuthorized = manageAuth.checkAccess('put'); // check user grants against PUT method
+    if (!isAuthorized) return cb(null, {statusCode:403})
     }
 
     const modifiedGrants = manageAuth.modAccess(); // set bucket ACL

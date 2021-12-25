@@ -20,7 +20,7 @@ user.setUserId();
  */
 async function head(req, res, next) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
-  const objectName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
+  const objectName = req.params.objectName ? req.params.objectName : null; // retrieve a file name
   const key = req.key; // Authorization signature
   
   try {
@@ -34,7 +34,7 @@ async function head(req, res, next) {
 
     if (bucketName && !objectName) {
       /**
-       * bucketName is defined, fileName is undefined
+       * bucketName is defined, objectName is undefined
        * invoke getBucketMeta service
        * to check existance and access to the particular bucket
        */

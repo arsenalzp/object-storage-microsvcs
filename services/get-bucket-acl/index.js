@@ -31,18 +31,20 @@ async function getBucketACL({request}, cb) {
   const { bucketName, userId } = request;
 
   try {
-    {
-      const [_, grants] = await bucket.isBucketExists(bucketName);
-      if (!grants) return cb(null, {statusCode: 404, grants: null})
+    const [_, isExist] = await bucket.isBucketExists(bucketName);
+    if (!isExist) return cb(null, {statusCode: 404, grants: null})
 
-      const manageAuth = new Grants(userId, grants, null, null);
-      const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
-      if (!isAuthorized) return cb(null, {statusCode:403, grants: null})
-    }
-    const [statusCode, grants] = await bucket.getObjectOrBucketACL(bucketName, null);
+    {
+    const [statusCode, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
+    const manageAuth = new Grants(userId, grants, null, null);
+    const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
+    if (!isAuthorized) return cb(null, {statusCode:403, grants: null})
+
     const serializedGrants = JSON.stringify(grants); // marshall a grants object to JSON
 
-    return cb(null, { statusCode, grants:serializedGrants })
+    return cb(null, { statusCode, grants: serializedGrants })
+    }
+
   } catch (err) {
     return cb(err, null)
   }

@@ -17,12 +17,15 @@ const httpSrv = http.createServer(async (req, res) => {
     const objectName = url.searchParams.get('objectName');
     const requesterId = url.searchParams.get('requesterId');
 
-    const [_, grants] = await bucket.isBucketExists(bucketName);
-    if (!grants) {
-      res.statusCode = 404;
-      return res.end()
+    {
+      const [_, isExist] = await bucket.isBucketExists(bucketName);
+      if (!isExist) {
+        res.statusCode = 404;
+        return res.end()
+      }
     }
 
+    const [_, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
     const manageAuth = new Grants(requesterId, grants, null, null);
     const isAuthorized = manageAuth.checkAccess('put'); // check user grants against PUT method
     if (!isAuthorized) {

@@ -34,9 +34,12 @@ async function putObjectACL({ request }, cb) {
 
   try {
     {
-      const [_, grants] = await bucket.isBucketExists(bucketName);
-      if (!grants) return cb(null, {statusCode:404})
+      const [_, isExist] = await bucket.isBucketExists(bucketName);
+      if (!isExist) return cb(null, {statusCode:404})
+    }
 
+    {
+      const [_, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
       manageAuth = new Grants(requesterId, grants, null, null);
       const isAuthorized = manageAuth.checkAccess('put'); // check user grants against PUT method
       if (!isAuthorized) return cb(null, {statusCode:403})

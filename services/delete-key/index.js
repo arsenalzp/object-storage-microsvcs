@@ -32,12 +32,15 @@ async function deleteKey({ request }, cb) {
 
   try {
     {
-      const [_, grants] = await bucket.isBucketExists(bucketName);
-      if (!grants) return cb(null, {statusCode:404})
+    const [_, isExist] = await bucket.isBucketExists(bucketName);
+    if (!isExist) return cb(null, {statusCode:404})
+    }
 
-      const manageAuth = new Grants(userId, grants, null, null);
-      const isAuthorized = manageAuth.checkAccess('del'); // check user grants against DEL method
-      if (!isAuthorized) return cb(null, {statusCode:403})
+    {
+    const [_, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
+    const manageAuth = new Grants(userId, grants, null, null);
+    const isAuthorized = manageAuth.checkAccess('del'); // check user grants against DEL method
+    if (!isAuthorized) return cb(null, {statusCode:403})
     }
 
     const [isFileExists, objectId] = await bucket.isFileExists(bucketName, objectName);

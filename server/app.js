@@ -27,7 +27,7 @@ const checkParams = require('./middleware/params-ckecker');
 const storage = multer.memoryStorage()
 const upload = multer({storage: storage})
 
-checkParams.fileNameLen(32);
+checkParams.fileNameLen(64);
 checkParams.bucketNameLen(16);
 
 // Init express
@@ -62,7 +62,7 @@ app.use((req, res, next) => {
 	logRequest(req, res, next, logger)
 });
 
-app.all('/:bucketId/:fileName', (req, res, next) => {
+app.all('/:bucketId/:objectName', (req, res, next) => {
   // Set CORS headers
 	res.setHeader('Access-Control-Allow-Origin', '*');
 	res.setHeader('Access-Control-Request-Method', '*');
@@ -79,20 +79,20 @@ app.all('/:bucketId/:fileName', (req, res, next) => {
 
 // HEAD routes
 app.head('/:bucketId', checkParams, head);
-app.head('/:bucketId/:fileName', checkParams, head);
+app.head('/:bucketId/:objectName', checkParams, head);
 
 // GET routes
 app.get('/', get);
 app.get('/:bucketId', checkParams, get);
-app.get('/:bucketId/:fileName', checkParams, get);
+app.get('/:bucketId/:objectName', checkParams, get);
 
 // PUT routes
-app.put('/:bucketId/:fileName', checkParams, upload.single('upload'), put);
+app.put('/:bucketId/:objectName', checkParams, upload.single('upload'), put);
 app.put('/:bucketId', checkParams, put)
-app.put('/:bucketId/:fileName', checkParams, put)
+app.put('/:bucketId/:objectName', checkParams, put)
 
 // DELETE routes
-app.delete('/:bucketId/:fileName', checkParams, del);
+app.delete('/:bucketId/:objectName', checkParams, del);
 
 app.use((err, req, res, next) => {
 	handleError(err, req, res, next, logger)

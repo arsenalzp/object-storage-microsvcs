@@ -16,19 +16,22 @@ server.on('stream', async (stream, headers) => {
     const bucketName = url.searchParams.get('bucketName');
     const objectName = url.searchParams.get('objectName');
     const requesterId = url.searchParams.get('requesterId');
-    const [_, grants] = await bucket.isBucketExists(bucketName);
-    if (!grants) { 
+    const [_, isExist] = await bucket.isBucketExists(bucketName);
+    if (!isExist) { 
       stream.respond({':status': 404})
       return stream.end()
     }
 
-    const manageAuth = new Grants(requesterId, grants, null, null);
-    const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
-    if (!isAuthorized) {
-      stream.respond({':status': 403})
-      return stream.end()
+    {
+      const [_, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
+      const manageAuth = new Grants(requesterId, grants, null, null);
+      const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
+      if (!isAuthorized) {
+        stream.respond({':status': 403})
+        return stream.end()
+      }
     }
-
+    
     {
       const [isFileExists, _] = await bucket.isFileExists(bucketName, objectName);
       if (!isFileExists) {

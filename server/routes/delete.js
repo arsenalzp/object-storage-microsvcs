@@ -17,7 +17,7 @@ user.setUserId();
  */
 async function del(req, res, next) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
-  const objectName = req.params.fileName; // retrieve a object name
+  const objectName = req.params.objectName; // retrieve a object name
   const key = req.key; // Authorization signature
 
   try { 

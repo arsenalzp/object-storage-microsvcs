@@ -26,7 +26,7 @@ user.setUserId();
  */
 async function get(req, res, next) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
-  const objectName = req.params.fileName ? req.params.fileName : null; // retrieve a file name
+  const objectName = req.params.objectName ? req.params.objectName : null; // retrieve a file name
   const aclMethod = req.query.acl ? req.query.acl : null; // retrieve acl query param
   const key = req.key; // Authorization signature
 

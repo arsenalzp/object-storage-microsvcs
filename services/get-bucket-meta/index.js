@@ -31,14 +31,17 @@ async function getBucketMeta({ request }, cb) {
   const { bucketName, userId } = request;
 
   try {
-    const [_, grants] = await bucket.isBucketExists(bucketName);
-    if (!grants) return cb(null, {statusCode: 404})
+    const [_, isExist] = await bucket.isBucketExists(bucketName);
+    if (!isExist) return cb(null, {statusCode: 404})
 
+    {
+    const [_, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
     const manageAuth = new Grants(userId, grants, null, null);
     const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
     if (!isAuthorized) return cb(null, {statusCode: 403})
 
     return cb(null, {statusCode: 200})
+    }
   } catch (err) {
     return cb(err, null)
   }

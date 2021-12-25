@@ -33,7 +33,7 @@ class Grants {
   modAccess() {
     try {
       for (const [i, v] of this.grants.grants.entries()) {
-        if (v[this.targetUserId]) {
+        if (v.hasOwnProperty(this.targetUserId)) {
           this.grants.grants[i][this.targetUserId] = this._parseGrants(this.targetGrants);
           return this.grants.grants
         }

@@ -8,7 +8,7 @@ service GetObjectMeta {
 
 message Request {
   string bucketName = 1; 
-  string objectName = 2; // named fileName in service function
+  string objectName = 2;
   string userId = 3;
 }
 
