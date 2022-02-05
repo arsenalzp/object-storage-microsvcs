@@ -1,17 +1,38 @@
 'use strict'
 
-const { SERVICE_PORT } = process.env;
-//const SERVICE_PORT = 7001;
-
 const bucket = require('./models/bucket');
 const Grants = require('./utils/check-grants');
-const http = require('http');
+
+const cwd = require('process').cwd();
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
 const {Readable} = require('stream');
 
-const httpSrv = http.createServer(async (req, res) => {
+if (process.env.NODE_ENV === "development") {
+  var SERVICE_PORT = 7001
+}
+
+if (process.env.NODE_ENV === "production") {
+  var SERVICE_PORT = process.env.SERVICE_PORT
+}
+
+const tlsCreds = {
+  cacert: fs.readFileSync(path.join(__dirname, 'tls', 'rootCA.crt')),
+  srvcert: fs.readFileSync(path.join(__dirname, 'tls', 'server.objstorage.crt')),
+  srvkey: fs.readFileSync(path.join(__dirname, 'tls', 'server.objstorage.key'))
+};
+
+const OPTIONS = {
+  key: tlsCreds.srvkey,
+  cert: tlsCreds.srvcert,
+  ca: tlsCreds.cacert,
+};
+
+const httpsSrv = https.createServer(OPTIONS, async (req, res) => {
   try {  
     const data = [];
-    const url = new URL(`http://localhost:7001${req.url}`);
+    const url = new URL(`https://localhost:7001${req.url}`);
 
     const bucketName = url.searchParams.get('bucketName');
     const objectName = url.searchParams.get('objectName');
@@ -61,6 +82,14 @@ const httpSrv = http.createServer(async (req, res) => {
   }
 })
 
-httpSrv.listen(SERVICE_PORT);
+httpsSrv.on('tlsClientError', (err) => {
+	console.error(`TLS Client Error ${JSON.stringify(err)}`);
+});
+
+httpsSrv.on('error', (err) => {
+  console.error(`HTTPS server error ${JSON.stringify(err)}`);
+});
+
+httpsSrv.listen(SERVICE_PORT);
 
 

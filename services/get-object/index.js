@@ -1,13 +1,38 @@
 'use strict'
 
-const { SERVICE_PORT } = process.env;
-// const SERVICE_PORT = 7002;
-
 const bucket = require('./models/bucket');
 const Grants = require('./utils/check-grants');
-const http2 = require('http2');
 
-const server = http2.createServer({maxSessionMemory: 2048});
+const cwd = require('process').cwd();
+const http2 = require('http2');
+const fs = require('fs');
+const path = require('path');
+
+if (process.env.NODE_ENV === "development") {
+  var SERVICE_PORT = 7001
+}
+
+if (process.env.NODE_ENV === "production") {
+  var SERVICE_PORT = process.env.SERVICE_PORT
+}
+
+const tlsCreds = {
+  cacert: fs.readFileSync(path.join(__dirname, 'tls', 'rootCA.crt')),
+  srvcert: fs.readFileSync(path.join(__dirname, 'tls', 'server.objstorage.crt')),
+  srvkey: fs.readFileSync(path.join(__dirname, 'tls', 'server.objstorage.key'))
+};
+
+const OPTIONS = {
+  key: tlsCreds.srvkey,
+  cert: tlsCreds.srvcert,
+  ca: tlsCreds.cacert,
+  maxSessionMemory: 2048,
+  peerMaxConcurrentStreams: 1024,
+  unknownProtocolTimeout: 1000
+};
+
+const server = http2.createSecureServer(OPTIONS);
+
 server.on('stream', async (stream, headers) => {
   try {
     const PATH = headers[':path']
@@ -49,6 +74,14 @@ server.on('stream', async (stream, headers) => {
     return stream.end()
   }
 });
+
+server.on('error', (err) => {
+  console.log(err);
+});
+
+server.on('tlsClientError', (msg) => {
+  console.log(msg);
+})
 
 server.listen(SERVICE_PORT);
 

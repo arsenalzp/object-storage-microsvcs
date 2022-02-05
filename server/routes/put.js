@@ -5,8 +5,13 @@ const { PUT_OBJECT_SVC_HOST, PUT_OBJECT_SVC_PORT } = process.env;
 const clientCreateBucket = require('../clients/create-bucket');
 const clientPutObjectAcl = require('../clients/put-object-acl');
 const clientPutBucketAcl = require('../clients/put-bucket-acl');
+
 const User = require('../models/user');
-const http = require('http');
+
+const cwd = require('process').cwd();
+const path = require('path');
+const https = require('https');
+const fs = require('fs');
 
 const user = new User();
 user.setUserId();
@@ -137,21 +142,41 @@ async function put(req, res, next) {
         return next(err)
       }
       
-      const { buffer: fileBuffer } = req.file;
+      const { buffer: objBuffer } = req.file;
+      
+      if (process.env.NODE_ENV === "development") {
+        var PUT_OBJECT_SVC_HOST = 'localhost';
+        var PUT_OBJECT_SVC_PORT = 7001;
+      }
+      
+      if (process.env.NODE_ENV === "production") {
+        var PUT_OBJECT_SVC_HOST = process.env.PUT_OBJECT_SVC_HOST;
+        var PUT_OBJECT_SVC_PORT  = process.env.PUT_OBJECT_SVC_PORT;
+      }
+      
 
-      const rq = http.request({
+      const tlsCreds = {
+        cacert: fs.readFileSync(path.join(cwd, 'clients', 'put-object', 'tls', 'rootCA.crt')),
+      }
+      
+      const OPTIONS = {
         port: PUT_OBJECT_SVC_PORT,
         host: PUT_OBJECT_SVC_HOST,
+        ca: tlsCreds.cacert,
         method: 'POST',
         path: `/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`,
-      }, (rs) => {
+        rejectUnauthorized: false
+      };
+
+      const rq = https.request(OPTIONS, (rs) => {
         rs.read()
         res.statusCode = rs.statusCode;
 
         return res.end()
-      })
-      rq.write(fileBuffer)
-      rq.end()
+      });
+
+      rq.write(objBuffer);
+      rq.end();
 
       rq.on('error', (err) => {
         err.statusCode = 500;

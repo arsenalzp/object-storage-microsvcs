@@ -1,4 +1,12 @@
-const { DB_HOST, DB_PORT } = process.env;
+if (process.env.NODE_ENV === "development") {
+  var DB_HOST = 'localhost';
+  var DB_PORT = 27017;
+}
+
+if (process.env.NODE_ENV === "production") {
+  var DB_HOST = process.env.DB_HOST;
+  var DB_PORT = process.env.DB_PORT;
+}
 
 const URL = `mongodb://${DB_HOST}:${DB_PORT}`;
 

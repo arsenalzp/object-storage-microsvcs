@@ -1,11 +1,23 @@
 'use strict'
 
-const { APP_PORT } = process.env;
-// const APP_PORT = 8080
-const { LOGS_PATH } = process.env;
-// const LOGS_PATH = './logs';
-
 const path = require('path');
+const fs = require('fs');
+const https = require('https');
+
+// Set basic configuration info
+const APP_PORT = process.env.APP_PORT || 8080;
+const LOGS_PATH = process.env.LOGS_PATH || (path.join(process.cwd(), 'logs'));
+ 
+// Define a key and a cert
+// You can get a key and a cert from the Secret manifest
+const TLSKEY = process.env.TLSKEY || fs.readFileSync(path.join(process.cwd(), 'tls', 'default-key.pem'));
+const TLSCRT= process.env.TLSCRT ||  fs.readFileSync(path.join(process.cwd(), 'tls', 'default-cert.pem'));
+const OPTIONS = {
+	key: TLSKEY,
+	cert: TLSCRT,
+	rejectUnauthorized: false
+};
+
 const express = require('express');
 const multer = require('multer');
 const winston = require('winston');
@@ -22,6 +34,7 @@ const genReqId = require('./middleware/reqid-generator');
 const handleError = require('./middleware/error-handler');
 const logRequest = require('./middleware/request-logger');
 const checkParams = require('./middleware/params-ckecker');
+const { http } = require('winston');
 
 // Create new memory storage for multer
 const storage = multer.memoryStorage()
@@ -98,10 +111,22 @@ app.use((err, req, res, next) => {
 	handleError(err, req, res, next, logger)
 });
 
-app.listen(APP_PORT, () => {
+const server = https.createServer(OPTIONS, app);
+
+server.listen(APP_PORT, () => {
 	console.log(`Listening on ${APP_PORT} port`);
+
 	// Catch unhandled promise rejection
-  process.on('unhandledRejection', (reason, promise) => {
+	process.on('unhandledRejection', (reason, promise) => {
     console.log('Unhandled Rejection at:', promise, 'reason:', reason);
   });
-})
+});
+
+server.on('error', (err) => {
+	console.error(`Server error ${err}`);
+});
+
+server.on('tlsClientError', (err) => {
+	console.error(`TLS Client Error ${JSON.stringify(err)}`);
+});
+
