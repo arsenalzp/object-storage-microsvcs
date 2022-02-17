@@ -1,4 +1,5 @@
-const https = require('https');
+const http2 = require('http2');
+const cwd = require("process").cwd();
 const fs = require('fs');
 const path = require('path');
 
@@ -14,32 +15,20 @@ if (process.env.NODE_ENV === "production") {
 
 const tlsCreds = {
   cacert: fs.readFileSync(path.join(__dirname, 'tls', 'rootCA.crt')),
+  clntcert: fs.readFileSync(path.join(__dirname, 'tls', 'client.objstorage.crt')),
+  clntkey: fs.readFileSync(path.join(__dirname, 'tls', 'client.objstorage.key'))
 };
 
-async function PutObject(bucketName, objectName, userId, objBuffer) {
-  const rq = https.request({
-    host: PUT_OBJECT_SVC_HOST,
-    port: PUT_OBJECT_SVC_PORT,
-    ca: tlsCreds.cacert,
-    method: 'POST',
-    path: `/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`,
-    rejectUnauthorized: false
-  }, (rs) => {
-    const timeout = setTimeout(() => {throw new Error('request timed out')}, 5000);
-    rs.read();
-    clearTimeout(timeout);
-    
-    return rs;
-  });
+const OPTIONS = {
+  ca: tlsCreds.cacert,
+  rejectUnauthorized: false, // only for dev environment!!
+};
 
-  rq.write(objBuffer)
-  rq.end()
+const service = {
+  URL: `https://${PUT_OBJECT_SVC_HOST}:${PUT_OBJECT_SVC_PORT}`,
+  connect() {
+    return http2.connect(this.URL, OPTIONS)
+  }
+};
 
-  rq.on('error', (err) => {
-    throw err
-  });
-}
-
-module.exports = {
-  PutObject
-}
+module.exports = service;

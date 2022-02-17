@@ -1,11 +1,7 @@
+const http2 = require('http2');
 const cwd = require("process").cwd();
 const fs = require('fs');
 const path = require('path');
-const PROTO_PATH = cwd + '/clients/delete-key/index.proto';
-const grpc = require("@grpc/grpc-js");
-const protoLoader = require('@grpc/proto-loader');
-const packageDef = protoLoader.loadSync(PROTO_PATH, {});
-const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
 
 if (process.env.NODE_ENV === "development") {
   var DELETE_KEY_SVC_HOST = 'localhost';
@@ -23,10 +19,16 @@ const tlsCreds = {
   clntkey: fs.readFileSync(path.join(__dirname, 'tls', 'client.objstorage.key'))
 };
 
-const client = new protoDescriptor.services.DeleteKey(
-  `${DELETE_KEY_SVC_HOST}:${DELETE_KEY_SVC_PORT}`,
-  grpc.credentials.createSsl(tlsCreds.cacert, tlsCreds.clntkey, tlsCreds.clntcert),
-  {'grpc.ssl_target_name_override' : 'client.objstorage.local'}
-);
+const OPTIONS = {
+  ca: tlsCreds.cacert,
+  rejectUnauthorized: false, // only for dev environment!!
+};
 
-module.exports = client;
+const service = {
+  URL: `https://${DELETE_KEY_SVC_HOST}:${DELETE_KEY_SVC_PORT}`,
+  connect() {
+    return http2.connect(this.URL, OPTIONS)
+  }
+};
+
+module.exports = service;
