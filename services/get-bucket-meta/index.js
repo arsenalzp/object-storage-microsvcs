@@ -12,6 +12,7 @@ const protoLoader = require('@grpc/proto-loader');
 const packageDef = protoLoader.loadSync(PROTO_PATH, {});
 const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
 const svc = protoDescriptor.services;
+const checkAuth = require('./utils/check-grants');
 
 if (process.env.NODE_ENV === "development") {
   var SERVICE_PORT = 7001
@@ -45,17 +46,16 @@ async function getBucketMeta({ request }, cb) {
   const { bucketName, userId } = request;
 
   try {
-    const [_, isExist] = await bucket.isBucketExists(bucketName);
-    if (!isExist) return cb(null, {statusCode: 404})
-
+    const [_, doc] = await bucket.isBucketExists(bucketName);
+    if (!doc) return cb(null, {statusCode: 404})
+    const {_id} = doc;
+    
     {
-    const [_, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
-    const manageAuth = new Grants(userId, grants, null, null);
-    const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
-    if (!isAuthorized) return cb(null, {statusCode: 403})
+    const statusCode = await checkAuth(_id, "B", "get", userId);
+    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
+    }
 
     return cb(null, {statusCode: 200})
-    }
   } catch (err) {
     return cb(err, null)
   }

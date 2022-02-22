@@ -4,7 +4,7 @@ const DBNAME = 'buckets'; // MongoDB DB name
 const BCOLLECTION = 'bucketsCollection'; // MongoDB collection of buckets
 const FCOLLECTION = 'filesCollection'; // MongoDB collection of files
 
-const { client } = require('../utils/db');
+const { client } = require('../clients/db');
 
 /**
  * Check bucket existence.
@@ -21,7 +21,7 @@ async function isBucketExists(bucketName) {
     const isExist = await db
       .collection(BCOLLECTION)
       .findOne(
-        {bucketname: bucketName},
+        {"bucketName": bucketName},
         {$exists: true}
       )
     
@@ -52,8 +52,8 @@ async function getObjectOrBucketACL(bucketName, objectName) {
       const result = await db
         .collection(BCOLLECTION)
         .findOne(
-          {bucketname: bucketName},
-          {projection: { grants:1 }}
+          {"bucketName": bucketName},
+          {projection: { grants:1, _id: 1 }}
         )
 
       return [200, result]
@@ -61,7 +61,7 @@ async function getObjectOrBucketACL(bucketName, objectName) {
       const result = await db
         .collection(FCOLLECTION)
         .findOne(
-          {bucket: bucketName, filename: objectName},
+          {"bucketName": bucketName, "fileName": objectName},
           {projection: { grants:1 }}
         )
 

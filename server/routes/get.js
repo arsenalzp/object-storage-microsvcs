@@ -2,10 +2,9 @@
 
 const clientGetBucketAcl = require('../clients/get-bucket-acl');
 const clientGetListObjects = require('../clients/get-list-objects');
-const clietnGetListBuckets = require('../clients/get-list-buckets');
+const clistnGetListBuckets = require('../clients/get-list-buckets');
 const clientGetObjectAcl = require('../clients/get-object-acl');
 const clientGetObject = require('../clients/get-object');
-
 const User = require('../models/user');
 
 const user = new User();
@@ -46,7 +45,7 @@ async function get(req, res, next) {
        * invoke getListBucket service
        * to get list of user's buckets
        */
-       clietnGetListBuckets.GetListBuckets(
+      clistnGetListBuckets.GetListBuckets(
         {userId},
         (err, resp) => {
 
@@ -96,7 +95,7 @@ async function get(req, res, next) {
 
       // instantiate HTTP/2 stream by requesting remote URL
       const serviceResp = session.request({
-        ':path': `/get/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`
+        ':path': `/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`
       });
 
       // The 'response' event is emitted when a response HEADERS frame has been received for this stream from the connected HTTP/2 server. 

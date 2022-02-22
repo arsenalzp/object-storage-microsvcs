@@ -20,7 +20,7 @@ async function isBucketExists(bucketName) {
     const isExist = await db
       .collection(BCOLLECTION)
       .findOne(
-        {bucketname: bucketName},
+        {bucketName: bucketName},
         {$exists: true}
       )
     
@@ -46,7 +46,7 @@ async function createBucket(bucketName, userId) {
     
     const col = db.collection(BCOLLECTION);
     const insertDbResult = await col.insertOne({
-      bucketname: bucketName, 
+      bucketName: bucketName, 
       createdAt: new Date(),
       owner: userId,
       grants: [{

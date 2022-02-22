@@ -7,7 +7,6 @@ const PROTO_PATH = cwd + '/proto/index.proto';
 const bucket = require('./models/bucket');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
-const { log } = require('console');
 const packageDef = protoLoader.loadSync(PROTO_PATH, {});
 const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
 const svc = protoDescriptor.services;

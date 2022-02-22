@@ -1,7 +1,6 @@
 'use strict'
 
 const bucket = require('./models/bucket');
-const Grants = require('./utils/check-grants');
 
 const path = require('path');
 const cwd = require('process').cwd();
@@ -12,6 +11,7 @@ const protoLoader = require('@grpc/proto-loader');
 const packageDef = protoLoader.loadSync(PROTO_PATH, {});
 const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
 const svc = protoDescriptor.services;
+const checkAuth = require('./utils/check-grants');
 
 if (process.env.NODE_ENV === "development") {
   var SERVICE_PORT = 7001
@@ -56,19 +56,22 @@ async function getObjectMeta({ request }, cb) {
   const { bucketName, objectName, userId } = request;
 
   try {
-    const [_, isExist] = await bucket.isBucketExists(bucketName);
-    if (!isExist) return cb(null, {statusCode: 404})
+    const [_, doc] = await bucket.isBucketExists(bucketName);
+    if (!doc) return cb(null, {statusCode: 404})
+    const {_id} = doc;
 
     {
-    const [_, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
-    const manageAuth = new Grants(userId, grants, null, null);
-    const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
-    if (!isAuthorized) return cb(null, {statusCode: 403})
+    const statusCode = await checkAuth(_id, "B", "get", userId);
+    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
     }
 
     {
-    const [isFileExists, _]  = await bucket.isFileExists(bucketName, objectName)
-    if (!isFileExists) return cb(null, {statusCode: 404})
+    const [_, doc]  = await bucket.isFileExists(bucketName, objectName)
+    if (!doc) return cb(null, {statusCode: 404})
+    const {_id} = doc;
+    
+    const statusCode = await checkAuth(_id, "O", "get", userId);
+    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
     }
 
     return cb(null, {statusCode: 200})

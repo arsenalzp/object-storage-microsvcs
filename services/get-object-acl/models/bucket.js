@@ -4,31 +4,27 @@ const DBNAME = 'buckets'; // MongoDB DB name
 const BCOLLECTION = 'bucketsCollection'; // MongoDB collection of buckets
 const FCOLLECTION = 'filesCollection'; // MongoDB collection of files
 
-const { client } = require('../utils/db');
+const { client } = require('../clients/db');
 
 /**
  * Check object existence in the particular bucket
  * 
  * @param {String} bucketName bucket name
  * @param {String} objectName object name
- * @returns {Promise<Array>} resolve Array [Boolean, String]
+ * @returns {Promise<Array>} resolve Array [Number, Object]
  */
 async function isFileExists(bucketName, objectName) {
   try {
     const db = (await client()).db(DBNAME)
 
-    const findFileResult = await db
+    const doc = await db
       .collection(FCOLLECTION)
       .findOne({
-          bucket: bucketName,
-          filename: objectName
+          "bucketName": bucketName,
+          "fileName": objectName
       })
     
-    // if no result found in DB - return false
-    if (!findFileResult) return [false, null]
-
-    const { _id } = findFileResult;
-    return [true, _id]
+    return [200, doc]
   } catch (err) {
     throw {
       exitCode: 500,
@@ -49,14 +45,14 @@ async function isBucketExists(bucketName) {
   try {
     const db = (await client()).db(DBNAME)
 
-    const isExist = await db
+    const doc = await db
       .collection(BCOLLECTION)
       .findOne(
-        {bucketname: bucketName},
+        {"bucketName": bucketName},
         {$exists: true}
       )
     
-    return [200, isExist]
+    return [200, doc]
   } catch (err) {
     throw {
       exitCode: 500,
@@ -80,23 +76,23 @@ async function getObjectOrBucketACL(bucketName, objectName) {
      * return a bucket ACL
      */
     if (bucketName && !objectName) {
-      const result = await db
+      const doc = await db
         .collection(BCOLLECTION)
         .findOne(
-          {bucketname: bucketName},
+          {"bucketName": bucketName},
           {projection: { grants:1 }}
         )
 
-      return [200, result]
+      return [200, doc]
     } else if (bucketName && objectName) {
-      const result = await db
+      const doc = await db
         .collection(FCOLLECTION)
         .findOne(
-          {bucket: bucketName, filename: objectName},
+          {"bucketName": bucketName, "fileName": objectName},
           {projection: { grants:1 }}
         )
 
-      return [200, result]
+      return [200, doc]
     }
   } catch (err) {
     throw {

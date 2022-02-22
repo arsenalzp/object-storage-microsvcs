@@ -21,7 +21,7 @@ async function isBucketExists(bucketName) {
     const isExist = await db
       .collection(BCOLLECTION)
       .findOne(
-        {bucketname: bucketName},
+        {"bucketName": bucketName},
         {$exists: true}
       )
     
@@ -52,7 +52,7 @@ async function getObjectOrBucketACL(bucketName, objectName) {
       const result = await db
         .collection(BCOLLECTION)
         .findOne(
-          {bucketname: bucketName},
+          {"bucketName": bucketName},
           {projection: { grants:1 }}
         )
 
@@ -61,7 +61,7 @@ async function getObjectOrBucketACL(bucketName, objectName) {
       const result = await db
         .collection(FCOLLECTION)
         .findOne(
-          {bucket: bucketName, filename: objectName},
+          {"bucketName": bucketName, "fileName": objectName},
           {projection: { grants:1 }}
         )
 
@@ -87,7 +87,7 @@ async function listObjects(bucketName) {
 
     const filesList = await db
       .collection(FCOLLECTION)
-      .find({ bucket: bucketName }).toArray()
+      .find({ "bucketName": bucketName }).toArray()
 
     return [200, filesList]
   } catch (err) {

@@ -51,7 +51,7 @@ async function isBucketExists(bucketName) {
     const isExist = await db
       .collection(BCOLLECTION)
       .findOne(
-        {bucketname: bucketName},
+        {"bucketName": bucketName},
         {$exists: true}
       )
     
@@ -83,7 +83,7 @@ async function putObjectOrBucketACL(bucketName, objectName, newGrants) {
 
       const col = db.collection(BCOLLECTION)
       const dbUpdateResult = await col.updateOne(
-        {bucketname: bucketName},
+        {"bucketName": bucketName},
         {$set: {grants:newGrants}} 
       )
 
@@ -125,7 +125,7 @@ async function getObjectOrBucketACL(bucketName, objectName) {
       const result = await db
         .collection(BCOLLECTION)
         .findOne(
-          {bucketname: bucketName},
+          {"bucketName": bucketName},
           {projection: { grants:1 }}
         )
 
