@@ -8,7 +8,7 @@ service CreateBucket {
 
 message Request {
   string bucketName = 1;
-  string userId = 2;
+  string requesterUName = 2;
 }
 
 message Response {

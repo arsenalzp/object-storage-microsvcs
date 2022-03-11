@@ -7,7 +7,7 @@ service GetListBuckets {
 }
 
 message Request {
-  string userId = 1;
+  string requesterUName = 1;
 }
 
 message Response {

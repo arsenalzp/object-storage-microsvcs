@@ -49,11 +49,11 @@ server.addService(svc.GetObjectMeta.service,
  * 
  * @param {String} bucketName bucket name
  * @param {String} objectName object name
- * @param {String} userId requester ID
+ * @param {String} requesterUName requester ID
  * @returns {Promise<Array>} resolve Array [Number, Error]
  */
 async function getObjectMeta({ request }, cb) {
-  const { bucketName, objectName, userId } = request;
+  const { bucketName, objectName, requesterUName } = request;
 
   try {
     const [_, doc] = await bucket.isBucketExists(bucketName);
@@ -61,7 +61,7 @@ async function getObjectMeta({ request }, cb) {
     const {_id} = doc;
 
     {
-    const statusCode = await checkAuth(_id, "B", "get", userId);
+    const statusCode = await checkAuth(_id, "B", "get", requesterUName);
     if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
     }
 
@@ -70,7 +70,7 @@ async function getObjectMeta({ request }, cb) {
     if (!doc) return cb(null, {statusCode: 404})
     const {_id} = doc;
     
-    const statusCode = await checkAuth(_id, "O", "get", userId);
+    const statusCode = await checkAuth(_id, "O", "get", requesterUName);
     if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
     }
 

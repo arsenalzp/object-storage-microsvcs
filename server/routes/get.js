@@ -31,9 +31,9 @@ async function get(req, res, next) {
   const key = req.key; // Authorization signature
 
   try {
-    const userId = user.getUserId(key);
+    const requesterUName = user.getUserId(key);
 
-    if (!userId) {
+    if (!requesterUName) {
       const err = new Error('Unauthorized')
       err.statusCode = 401
       return next(err)
@@ -46,7 +46,7 @@ async function get(req, res, next) {
        * to get list of user's buckets
        */
       clistnGetListBuckets.GetListBuckets(
-        {userId},
+        {requesterUName},
         (err, resp) => {
 
           if (err) {
@@ -67,7 +67,7 @@ async function get(req, res, next) {
        */
 
       clientGetListObjects.GetListObjects(
-        {bucketName, userId},
+        {bucketName, requesterUName},
         (err, resp) => {
 
           if (err) {
@@ -95,7 +95,7 @@ async function get(req, res, next) {
 
       // instantiate HTTP/2 stream by requesting remote URL
       const serviceResp = session.request({
-        ':path': `/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`
+        ':path': `/get/?bucketName=${bucketName}&objectName=${objectName}&requesterUName=${requesterUName}`
       });
 
       // The 'response' event is emitted when a response HEADERS frame has been received for this stream from the connected HTTP/2 server. 
@@ -120,7 +120,7 @@ async function get(req, res, next) {
        * to get ACLs of the object
        */
       clientGetObjectAcl.GetObjectAcl(
-        {bucketName, objectName, userId},
+        {bucketName, objectName, requesterUName},
         (err, resp) => {
 
           if (err) {
@@ -140,7 +140,7 @@ async function get(req, res, next) {
        * to get ACLs of the bucket
        */
       clientGetBucketAcl.GetBucketAcl(
-        { bucketName, userId },
+        { bucketName, requesterUName },
         (err, resp) => {
 
           if (err) {

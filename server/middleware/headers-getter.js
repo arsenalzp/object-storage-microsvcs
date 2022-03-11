@@ -48,7 +48,7 @@ function getHeaders(req, res, next) {
 
     req.acl = acl; // attach acl
     
-    req.targetUserId = req.get('targetUserId'); // retrieve and attach the target user ID
+    req.targetUName = req.get('targetUName'); // retrieve and attach the target user ID
 
     req.key = req.get('Authorization'); // retrieve and attach the Authorization signature
     

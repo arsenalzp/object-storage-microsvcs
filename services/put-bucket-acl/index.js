@@ -1,7 +1,6 @@
 'use strict'
 
 const bucket = require('./models/bucket');
-const Grants = require('./utils/check-grants');
 
 const path = require('path');
 const cwd = require('process').cwd();
@@ -13,7 +12,7 @@ const packageDef = protoLoader.loadSync(PROTO_PATH, {});
 const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
 const svc = protoDescriptor.services;
 const checkAuth = require('./utils/check-grants');
-const modGrants = require('./utils/mod-grants');
+const parseGrants = require('./utils/mod-grants');
 
 if (process.env.NODE_ENV === "development") {
   var SERVICE_PORT = 7001
@@ -44,24 +43,17 @@ server.addService(svc.PutBucketAcl.service,
 );
 
 async function putBucketACL({ request }, cb) {
-  const { bucketName, targetUserId, targetGrants } = request;
-  let bucketGrants = null;
+  const { bucketName, requesterUName, targetUName, targetGrants } = request;
 
   try {
-    {
-    const [_, doc] = await bucket.isBucketExists(bucketName);
-    if (!doc) return cb(null, {statusCode:404})
-    const { _id, grants } = doc;
-    bucketGrants = grants;
-
-    const statusCode = await checkAuth(_id, "B", "put", userId);
+    const statusCode = await checkAuth(bucketName, "", "B", "put", requesterUName);
     if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
-    }
+    if (statusCode === 404) return cb(null, { statusCode: 404, grants: null })
 
-    const modifiedGrants = modGrants(bucketGrants, targetUserId, targetGrants); // set bucket ACL
-    const [statusCode, _] = await bucket.putObjectOrBucketACL(bucketName, null, modifiedGrants);
+    const modifiedGrants = parseGrants(targetGrants); // set bucket ACL
+    await bucket.putBucketACL(bucketName, targetUName, modifiedGrants);
 
-    return cb(null, {statusCode})
+    return cb(null, { statusCode: 200 })
   } catch (err) {
     return cb(err, null)
   }

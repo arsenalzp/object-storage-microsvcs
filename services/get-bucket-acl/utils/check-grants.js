@@ -10,7 +10,7 @@ function isAuth(ent_id, ent_type, op, user) {
     
     // instantiate HTTP/2 stream by requesting remote URL
     const serviceResp = session.request({
-      ':path': `/auth/?id=${ent_id}&type=${ent_type}&op=${op}&user=${user}`,
+      ':path': `/auth/?id=${ent_id}&type=${ent_type}&op=${op}&userName=${user}`,
       ':method' : 'GET',
       ':scheme': 'https'
     });

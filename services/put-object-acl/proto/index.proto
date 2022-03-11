@@ -9,8 +9,8 @@ service PutObjectAcl {
 message Request {
   string bucketName = 1;
   string objectName = 2;
-  string requesterId = 3;
-  string targetUserId = 4; 
+  string requesterUName = 3;
+  string targetUName = 4; 
   string targetGrants = 5;
 }
 

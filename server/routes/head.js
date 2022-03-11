@@ -24,9 +24,9 @@ async function head(req, res, next) {
   const key = req.key; // Authorization signature
   
   try {
-    const userId = user.getUserId(key);
+    const requesterUName = user.getUserId(key);
 
-    if (!userId) {
+    if (!requesterUName) {
       const err = new Error('Unauthorized')
       err.statusCode = 401
       return next(err)
@@ -39,7 +39,7 @@ async function head(req, res, next) {
        * to check existance and access to the particular bucket
        */
       clientGetBucketMeta.GetBucketMeta(
-        {bucketName, userId},
+        {bucketName, requesterUName},
         (err, resp) => {
 
           if (err) {
@@ -59,7 +59,7 @@ async function head(req, res, next) {
        * to check existance and access to the particular object
        */
       clientGetObjectMeta.GetObjectMeta(
-        {bucketName, objectName, userId},
+        {bucketName, objectName, requesterUName},
         (err, resp) => {
 
           if (err) {

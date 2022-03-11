@@ -29,9 +29,9 @@ async function put(req, res, next) {
   const key = req.key; // Authorization signature
 
   try {
-    const userId = user.getUserId(key);
+    const requesterUName = user.getUserId(key);
 
-    if (!userId) {
+    if (!requesterUName) {
       const err = new Error('Unauthorized')
       err.statusCode = 401
       return next(err)
@@ -44,7 +44,7 @@ async function put(req, res, next) {
        * to create a new bucket
        */
       clientCreateBucket.CreateBucket(
-        {bucketName, userId},
+        { bucketName, requesterUName },
         (err, resp) => {
 
           if (err) {
@@ -65,18 +65,18 @@ async function put(req, res, next) {
        */
 
       const targetGrants = req.acl;
-      const targetUserId = req.targetUserId;
+      const targetUName = req.targetUName;
 
-      if (!targetGrants || !targetUserId) {
+      if (!targetGrants || !targetUName) {
         const err = new Error('InvalidArgument')
         err.statusCode = 400;
         return next(err)
       }
 
-      const serializedGrants = JSON.stringify(targetGrants); // gRPC requires strings
+      const serializedGrants = JSON.stringify(targetGrants); // gRPC call requires strings
 
       clientPutObjectAcl.PutObjectAcl(
-        {bucketName, objectName, requesterId: userId, targetUserId, targetGrants: serializedGrants},
+        {bucketName, objectName, requesterUName, targetUName, targetGrants: serializedGrants},
         (err, resp) => {
 
           if (err) {
@@ -97,9 +97,9 @@ async function put(req, res, next) {
        * to put a new ACLs for the bucket
        */
       const targetGrants = req.acl;
-      const targetUserId = req.targetUserId;
+      const targetUName = req.targetUName;
 
-      if (!targetGrants || !targetUserId) {
+      if (!targetGrants || !targetUName) {
         const err = new Error('InvalidArgument')
         err.statusCode = 400;
         return next(err)
@@ -108,7 +108,7 @@ async function put(req, res, next) {
       const serializedGrants = JSON.stringify(targetGrants); // gRPC requires strings
 
       clientPutBucketAcl.PutBucketAcl(
-        {bucketName, requesterId: userId, targetUserId, targetGrants: serializedGrants},
+        {bucketName, requesterUName, targetUName, targetGrants: serializedGrants},
         (err, resp) => {
 
           if (err) {
@@ -146,7 +146,7 @@ async function put(req, res, next) {
       
       // instantiate HTTP/2 stream by requesting remote URL
       const serviceResp = session.request({
-        ':path': `/post/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`,
+        ':path': `/post/?bucketName=${bucketName}&objectName=${objectName}&requesterUName=${requesterUName}`,
         ':method' : 'POST',
         ':scheme': 'https'
       });

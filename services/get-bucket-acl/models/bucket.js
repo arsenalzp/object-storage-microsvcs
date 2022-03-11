@@ -21,9 +21,12 @@ async function isBucketExists(bucketName) {
     const isExist = await db
       .collection(BCOLLECTION)
       .findOne(
-        {"bucketName": bucketName},
-        {$exists: true}
-      )
+        {
+          "bucketName": bucketName
+        },
+        {
+          $exists: true
+        })
     
     return [200, isExist]
   } catch (err) {
@@ -52,18 +55,25 @@ async function getObjectOrBucketACL(bucketName, objectName) {
       const result = await db
         .collection(BCOLLECTION)
         .findOne(
-          {"bucketName": bucketName},
-          {projection: { grants:1, _id: 1 }}
-        )
+          {
+            "bucketName": bucketName
+          },
+          {
+            projection: { grants:1, _id: 1 }
+          })
 
       return [200, result]
     } else if (bucketName && objectName) {
       const result = await db
         .collection(FCOLLECTION)
         .findOne(
-          {"bucketName": bucketName, "fileName": objectName},
-          {projection: { grants:1 }}
-        )
+          {
+            "bucketName": bucketName, 
+            "fileName": objectName
+          },
+          {
+            projection: { grants:1 }
+          })
 
       return [200, result]
     }

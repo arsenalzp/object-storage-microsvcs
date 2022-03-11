@@ -40,9 +40,9 @@ server.addService(svc.GetListBuckets.service,
 );
 
 async function getListBuckets({request}, cb) {
-  const { userId } = request;
+  const { requesterUName } = request;
   try {
-      const [statusCode, buckets] = await bucket.getBuckets(userId); 
+      const [statusCode, buckets] = await bucket.getBuckets(requesterUName); 
       const serializedBuckets = JSON.stringify(buckets);
 
       return cb(null, {statusCode, buckets: serializedBuckets})

@@ -42,7 +42,7 @@ server.addService(svc.GetObjectAcl.service,
 );
 
 async function getObjectACL({request}, cb) {
-  const { bucketName, objectName, userId } = request;
+  const { bucketName, objectName, requesterUName } = request;
   try {
 
     const [_, doc] = await bucket.isBucketExists(bucketName);
@@ -50,7 +50,7 @@ async function getObjectACL({request}, cb) {
     const {_id} = doc;
 
     {
-    const statusCode = await checkAuth(_id, "B", "get", userId);
+    const statusCode = await checkAuth(_id, "B", "get", requesterUName);
     if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
     }
 
@@ -59,7 +59,7 @@ async function getObjectACL({request}, cb) {
     if (!doc) return cb(null, { statusCode:404, grants: null })
     const {_id} = doc;
 
-    const statusCode = await checkAuth(_id, "O", "get", userId);
+    const statusCode = await checkAuth(_id, "O", "get", requesterUName);
     if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
     }
     

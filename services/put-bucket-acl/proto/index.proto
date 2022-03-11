@@ -7,9 +7,9 @@ service PutBucketAcl {
 }
 
 message Request {
-  string bucketName = 1; 
-  string requesterId = 2; 
-  string targetUserId = 3; 
+  string bucketName = 1;
+  string requesterUName = 2; 
+  string targetUName = 3; 
   string targetGrants = 4;
 }
 

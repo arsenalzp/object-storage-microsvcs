@@ -42,7 +42,7 @@ server.addService(svc.GetListObjects.service,
 );
 
 async function getListObjects({request}, cb) {
-  const { bucketName, userId } = request;
+  const { bucketName, requesterUName } = request;
 
   try {
     const [_, isExist] = await bucket.isBucketExists(bucketName);
@@ -50,7 +50,7 @@ async function getListObjects({request}, cb) {
 
     {
     const [_, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
-    const manageAuth = new Grants(userId, grants, null, null);
+    const manageAuth = new Grants(requesterUName, grants, null, null);
     const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
     if (!isAuthorized) return cb(null, {statusCode:403, objects: null})
     }

@@ -2,114 +2,53 @@
 
 const DBNAME = 'buckets'; // MongoDB DB name
 const BCOLLECTION = 'bucketsCollection'; // MongoDB collection of buckets
-const FCOLLECTION = 'filesCollection'; // MongoDB collection of files
 
 const { client } = require('../clients/db');
-
-/**
- * Check bucket existence.
- * If exist - return a bucket document 
- * with included bucket grants
- * 
- * @param {String} bucketName bucket name
- * @returns {Promise<Array>} resolve Array [Number, Object]
- */
-async function isBucketExists(bucketName) {
-  try {
-    const db = (await client()).db(DBNAME)
-
-    const doc = await db
-      .collection(BCOLLECTION)
-      .findOne(
-        {"bucketName": bucketName},
-        {$exists: true}
-      )
-    
-    return [200, doc]
-  } catch (err) {
-    throw {
-      exitCode: 500,
-      message: err.message
-    }
-  }
-}
 
 /**
  * Apply a new ACL to the object or bucket
  * 
  * @param {String} bucketName bucket name
- * @param {String} objectName object name
+ * @param {String} targetUName target user name
  * @param {Object} newGrants new grants
- * @returns {Promise<Array>} resolve Array [Number, Object]
+ * @returns {Promise<Object>} resolve Object
  */
-async function putObjectOrBucketACL(bucketName, objectName, newGrants) {
-  try {
-    /**
-     * if an object name is not defined then
-     * apply grants to a bucket
-     */
-    if (bucketName && !objectName) {
-      const db = (await client()).db(DBNAME);
-
-      const col = db.collection(BCOLLECTION)
-      const updateResult = await col.updateOne(
-        {"bucketName": bucketName},
-        {$set: {grants:newGrants}} 
-      )
-
-      return [200, updateResult]
-    } else if (bucketName && objectName) {
-      const db = (await client()).db(DBNAME);
-      
-      const col = db.collection(FCOLLECTION)
-      const updateResult = await col.updateOne(
-        {"bucketName": bucketName, "fileName": objectName},
-        {$set: {grants: newGrants}} 
-      )
-
-    return [200, updateResult]
-    }
-  } catch (err) {
-    throw {
-      exitCode: 500,
-      message: err.message
-    }
-  }
-}
-
-/**
- * Get ACL of the object or bucket
- * 
- * @param {String} bucketName bucket name
- * @param {String} objectName object name
- * @returns {Promise<Array>} resolve Array [Number, Object]
- */
-async function getObjectOrBucketACL(bucketName, objectName) {
+async function putBucketACL(bucketName, targetUName, newGrants) {
   try {
     const db = (await client()).db(DBNAME);
-    /**
-     * if object name is not defined then
-     * return a bucket ACL
-     */
-    if (bucketName && !objectName) {
-      const doc = await db
-        .collection(BCOLLECTION)
-        .findOne(
-          {"bucketName": bucketName},
-          {projection: { grants:1 }}
-        )
+    const col = db.collection(BCOLLECTION);
 
-      return [200, doc]
-    } else if (bucketName && objectName) {
-      const doc = await db
-        .collection(FCOLLECTION)
-        .findOne(
-          {"bucketName": bucketName, "fileName": objectName},
-          {projection: { grants:1 }}
-        )
-
-      return [200, doc]
+    const findResult = await col.findOne(
+      { 
+        "bucketName": bucketName, 
+        "access.userName": targetUName 
+      })
+    
+    // if no results found - push a new grants for a new user
+    if (!findResult) {
+      const updateResult = await col.updateOne(
+        { 
+          "bucketName": bucketName
+        },
+        { 
+          $push: { "access": {"userName": targetUName, "grants":newGrants} } 
+        })
+        
+        return updateResult
     }
+
+    // update a grants by a new one
+    const updateResult = await col.updateOne(
+      { 
+        "bucketName": bucketName, 
+        "access.userName": targetUName 
+      },
+      { 
+        $set: { "access.$.grants": newGrants } 
+      } 
+    )
+
+    return updateResult
   } catch (err) {
     throw {
       exitCode: 500,
@@ -119,7 +58,5 @@ async function getObjectOrBucketACL(bucketName, objectName) {
 }
 
 module.exports = {
-  isBucketExists,
-  putObjectOrBucketACL,
-  getObjectOrBucketACL
+  putBucketACL
 }

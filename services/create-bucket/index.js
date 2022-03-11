@@ -44,12 +44,12 @@ try {
 }
 
 async function createBucket({request}, cb) {
-  const {bucketName, userId} = request;
+  const {bucketName, requesterUName} = request;
   try {
     const [_, isExist] = await bucket.isBucketExists(bucketName);
 
     if (!isExist) {
-      const [statusCode, _] = await bucket.createBucket(bucketName, userId);
+      const [statusCode, _] = await bucket.createBucket(bucketName, requesterUName);
       if (statusCode === 201) return cb(null, {statusCode})
     }
 

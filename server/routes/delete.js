@@ -21,9 +21,9 @@ async function del(req, res, next) {
   const key = req.key; // Authorization signature
 
   try { 
-    const userId = user.getUserId(key);
+    const requesterUName = user.getUserId(key);
 
-    if (!userId) {
+    if (!requesterUName) {
       const err = new Error('Unauthorized')
       err.statusCode = 401
       return next(err)
@@ -42,7 +42,7 @@ async function del(req, res, next) {
      
      // instantiate HTTP/2 stream by requesting remote URL
      const serviceResp = session.request({
-       ':path': `/del/?bucketName=${bucketName}&objectName=${objectName}&requesterId=${userId}`,
+       ':path': `/del/?bucketName=${bucketName}&objectName=${objectName}&requesterUName=${requesterUName}`,
        ':method' : 'DELETE',
        ':scheme': 'https'
      });
@@ -64,48 +64,6 @@ async function del(req, res, next) {
        err.statusCode = 500;
        return next(err)
      });
-    //----
-    //  const tlsCreds = {
-    //   cacert: fs.readFileSync(path.join(cwd, 'clients', 'put-object', 'tls', 'rootCA.crt')),
-    // }
-    
-    // const OPTIONS = {
-    //   host: DELETE_KEY_SVC_HOST,
-    //   port: DELETE_KEY_SVC_PORT,
-    //   ca: tlsCreds.cacert,
-    //   method: 'DELETE',
-    //   path: `/${bucketName}/${objectName}`,
-    //   rejectUnauthorized: false
-    // };
-
-    // const rq = https.request(OPTIONS, (rs) => {
-    //   rs.read()
-    //   res.statusCode = rs.statusCode;
-
-    //   return res.end()
-    // });
-
-    // rq.end();
-
-    // rq.on('error', (err) => {
-    //   err.statusCode = 500;
-    //   return next(err)
-    // })
-
-    // clientDeleteKey.DeleteKey(
-    //   {bucketName, objectName, userId},
-    //   (err, resp) => {
-
-    //     if (err) {
-    //       err.statusCode = 500;
-    //       return next(err)
-    //     }
-
-    //     const {statusCode} = resp;
-
-    //     return res.status(statusCode).end()
-    //   }
-    // );
   } catch (err) {
     err.type = 'routes';
     err.statusCode = 500;

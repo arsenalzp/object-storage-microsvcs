@@ -9,7 +9,7 @@ service GetObjectAcl {
 message Request {
   string bucketName = 1; 
   string objectName = 2;
-  string userId = 3;
+  string requesterUName = 3;
 }
 
 message Response {

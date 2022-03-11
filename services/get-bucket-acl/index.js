@@ -42,7 +42,7 @@ server.addService(svc.GetBucketAcl.service,
 );
 
 async function getBucketACL({request}, cb) {
-  const { bucketName, userId } = request;
+  const { bucketName, requesterUName } = request;
 
   try {
     const [_, doc] = await bucket.isBucketExists(bucketName);
@@ -50,7 +50,7 @@ async function getBucketACL({request}, cb) {
     const {_id} = doc;
     
     {
-    const statusCode = await checkAuth(_id, "B", "get", userId);
+    const statusCode = await checkAuth(_id, "B", "get", requesterUName);
     if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
     }
 

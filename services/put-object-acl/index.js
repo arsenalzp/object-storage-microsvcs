@@ -1,7 +1,6 @@
 'use strict'
 
 const bucket = require('./models/bucket');
-const Grants = require('./utils/check-grants');
 
 const path = require('path');
 const cwd = require('process').cwd();
@@ -12,6 +11,8 @@ const protoLoader = require('@grpc/proto-loader');
 const packageDef = protoLoader.loadSync(PROTO_PATH, {});
 const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
 const svc = protoDescriptor.services;
+const checkAuth = require('./utils/check-grants');
+const parseGrants = require('./utils/mod-grants');
 
 if (process.env.NODE_ENV === "development") {
   var SERVICE_PORT = 7001
@@ -41,33 +42,24 @@ server.addService(svc.PutObjectAcl.service,
   }
 );
 
-//async function putObjectACL(bucketName, objectName, requesterId, targetUserId, targetGrants) {
 async function putObjectACL({ request }, cb) {
-  const { bucketName, objectName, requesterId, targetUserId, targetGrants } = request;
-  let manageAuth = null;
+  const { bucketName, objectName, requesterUName, targetUName, targetGrants } = request;
 
   try {
-    {
-      const [_, isExist] = await bucket.isBucketExists(bucketName);
-      if (!isExist) return cb(null, {statusCode:404})
-    }
-
-    {
-      const [_, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
-      manageAuth = new Grants(requesterId, grants, null, null);
-      const isAuthorized = manageAuth.checkAccess('put'); // check user grants against PUT method
-      if (!isAuthorized) return cb(null, {statusCode:403})
-    }
-
-    {
-      const [isFileExists, _] = await bucket.isFileExists(bucketName, objectName);
-      if (!isFileExists) return cb(null, {statusCode:404})
-    }
-
-    const modifiedGrants = manageAuth.set(targetUserId, targetGrants); // set object ACL
-    const [statusCode, _] = await bucket.putObjectOrBucketACL(bucketName, objectName, modifiedGrants);
+    const statusCode = await checkAuth(bucketName, "", "B", "put", requesterUName);
+    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
+    if (statusCode === 404) return cb(null, { statusCode: 404, grants: null })
     
-    return cb(null, {statusCode})
+    {
+      const statusCode = await checkAuth(bucketName, objectName, "O", "put", requesterUName);
+      if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
+      if (statusCode === 404) return cb(null, { statusCode: 404, grants: null })
+    }
+
+    const modifiedGrants = parseGrants(targetGrants); // set object ACL
+    await bucket.putObjectACL(bucketName, objectName, targetUName, modifiedGrants);
+
+    return cb(null, { statusCode: 200 })
   } catch (err) {
     return cb(err, null)
   }
