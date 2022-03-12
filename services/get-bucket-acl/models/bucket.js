@@ -7,76 +7,26 @@ const FCOLLECTION = 'filesCollection'; // MongoDB collection of files
 const { client } = require('../clients/db');
 
 /**
- * Check bucket existence.
- * If exist - return a bucket document 
- * with included bucket grants
+ * Get ACL of a bucket
  * 
  * @param {String} bucketName bucket name
- * @returns {Promise<Array>} resolve Array [Number, Object]
+ * @returns {Promise<Object>} resolve Object 
  */
-async function isBucketExists(bucketName) {
-  try {
-    const db = (await client()).db(DBNAME)
-
-    const isExist = await db
-      .collection(BCOLLECTION)
-      .findOne(
-        {
-          "bucketName": bucketName
-        },
-        {
-          $exists: true
-        })
-    
-    return [200, isExist]
-  } catch (err) {
-    throw {
-      exitCode: 500,
-      message: err.message
-    }
-  }
-}
-
-/**
- * Get ACL of the object or bucket
- * 
- * @param {String} bucketName bucket name
- * @param {String} objectName object name
- * @returns {Promise<Array>} resolve Array [Number, Object]
- */
-async function getObjectOrBucketACL(bucketName, objectName) {
+async function getBucketACL(bucketName) {
   try {
     const db = (await client()).db(DBNAME);
-    /**
-     * if object name is not defined then
-     * return a bucket ACL
-     */
-    if (bucketName && !objectName) {
-      const result = await db
+
+      const findResult = await db
         .collection(BCOLLECTION)
         .findOne(
           {
             "bucketName": bucketName
           },
           {
-            projection: { grants:1, _id: 1 }
+            projection: { access:1, _id: 1 }
           })
 
-      return [200, result]
-    } else if (bucketName && objectName) {
-      const result = await db
-        .collection(FCOLLECTION)
-        .findOne(
-          {
-            "bucketName": bucketName, 
-            "fileName": objectName
-          },
-          {
-            projection: { grants:1 }
-          })
-
-      return [200, result]
-    }
+      return findResult
   } catch (err) {
     throw {
       exitCode: 500,
@@ -86,6 +36,5 @@ async function getObjectOrBucketACL(bucketName, objectName) {
 }
 
 module.exports = {
-  isBucketExists,
-  getObjectOrBucketACL
+  getBucketACL
 }

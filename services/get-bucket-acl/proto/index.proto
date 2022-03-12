@@ -13,5 +13,5 @@ message Request {
 
 message Response {
   uint32 statusCode = 1;
-  string grants = 2;
+  string bucketACL = 2;
 }

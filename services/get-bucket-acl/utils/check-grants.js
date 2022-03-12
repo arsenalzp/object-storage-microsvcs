@@ -1,6 +1,6 @@
 const clientAuthSvc = require('../clients/svc');
 
-function isAuth(ent_id, ent_type, op, user) {
+function isAuth(bucketName, objectName, ent_type, op, user) {
   const session = clientAuthSvc.connect();
 
   return new Promise((resolve, reject) => {
@@ -10,7 +10,7 @@ function isAuth(ent_id, ent_type, op, user) {
     
     // instantiate HTTP/2 stream by requesting remote URL
     const serviceResp = session.request({
-      ':path': `/auth/?id=${ent_id}&type=${ent_type}&op=${op}&userName=${user}`,
+      ':path': `/auth/?bucketName=${bucketName}&objectName=${objectName}&type=${ent_type}&op=${op}&userName=${user}`,
       ':method' : 'GET',
       ':scheme': 'https'
     });

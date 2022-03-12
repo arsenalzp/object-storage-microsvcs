@@ -45,21 +45,14 @@ async function getBucketACL({request}, cb) {
   const { bucketName, requesterUName } = request;
 
   try {
-    const [_, doc] = await bucket.isBucketExists(bucketName);
-    if (!doc) return cb(null, {statusCode: 404, grants: null})
-    const {_id} = doc;
-    
-    {
-    const statusCode = await checkAuth(_id, "B", "get", requesterUName);
-    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
-    }
+    const statusCode = await checkAuth(bucketName, "", "B", "get", requesterUName);
+    if (statusCode === 403) return cb(null, { statusCode: 403, access: null })
+    if (statusCode === 404) return cb(null, { statusCode: 404, access: null })
 
-    {
-    const [statusCode, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
-    const serializedGrants = JSON.stringify(grants); // marshall a grants object to JSON
+    const findResult = await bucket.getBucketACL(bucketName); // retrieve grants
+    const bucketACL = JSON.stringify(findResult); // marshall _id and ACL to JSON
 
-    return cb(null, { statusCode, grants: serializedGrants })
-    }
+    return cb(null, { bucketACL, statusCode: 200 })
 
   } catch (err) {
     return cb(err, null)

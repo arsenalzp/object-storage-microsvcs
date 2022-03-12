@@ -148,9 +148,9 @@ async function get(req, res, next) {
             return next(err)
           }
 
-          const { statusCode, grants } = resp;
+          const { statusCode, bucketACL } = resp;
 
-          return res.status(statusCode).end(grants)
+          return res.status(statusCode).end(bucketACL)
         }
       )
     } else {
