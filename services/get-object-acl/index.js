@@ -44,29 +44,20 @@ server.addService(svc.GetObjectAcl.service,
 async function getObjectACL({request}, cb) {
   const { bucketName, objectName, requesterUName } = request;
   try {
-
-    const [_, doc] = await bucket.isBucketExists(bucketName);
-    if (!doc) return cb(null, { statusCode:404, grants: null })
-    const {_id} = doc;
-
     {
-    const statusCode = await checkAuth(_id, "B", "get", requesterUName);
-    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
-    }
-
-    {
-    const [_, doc]  = await bucket.isFileExists(bucketName, objectName)
-    if (!doc) return cb(null, { statusCode:404, grants: null })
-    const {_id} = doc;
-
-    const statusCode = await checkAuth(_id, "O", "get", requesterUName);
-    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
+      const statusCode = await checkAuth(bucketName, "", "B", "get", requesterUName);
+      if (statusCode === 403) return cb(null, { statusCode: 403, access: null })
+      if (statusCode === 404) return cb(null, { statusCode: 404, access: null })
     }
     
-    const [statusCode, grants] = await bucket.getObjectOrBucketACL(bucketName, objectName);
-    const serializedGrants = JSON.stringify(grants);
+    const statusCode = await checkAuth(bucketName, objectName, "O", "get", requesterUName);
+    if (statusCode === 403) return cb(null, { statusCode: 403, access: null })
+    if (statusCode === 404) return cb(null, { statusCode: 404, access: null })
+    
+    const findResult = await bucket.getObjectACL(bucketName, objectName);
+    const objectACL = JSON.stringify(findResult);
 
-    return cb(null, {statusCode, grants: serializedGrants})
+    return cb(null, { objectACL, statusCode: 200 })
   } catch (err) {
     return cb(err, null)
   }
