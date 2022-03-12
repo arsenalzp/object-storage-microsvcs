@@ -23,7 +23,7 @@ async function getBucketACL(bucketName) {
             "bucketName": bucketName
           },
           {
-            projection: { access:1, _id: 1 }
+            projection: {_id: 1, access: 1 }
           })
 
       return findResult
