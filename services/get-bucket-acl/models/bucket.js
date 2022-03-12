@@ -2,7 +2,6 @@
 
 const DBNAME = 'buckets'; // MongoDB DB name
 const BCOLLECTION = 'bucketsCollection'; // MongoDB collection of buckets
-const FCOLLECTION = 'filesCollection'; // MongoDB collection of files
 
 const { client } = require('../clients/db');
 

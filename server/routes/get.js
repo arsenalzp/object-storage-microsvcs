@@ -128,9 +128,9 @@ async function get(req, res, next) {
             return next(err)
           }
 
-          const { statusCode, grants } = resp;
+          const { statusCode, objectACL } = resp;
           
-          return res.status(statusCode).end(grants)
+          return res.status(statusCode).end(objectACL)
         }
       )
     } else if (bucketName && !objectName && aclMethod) {
