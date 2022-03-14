@@ -49,7 +49,7 @@ async function getBucketACL({request}, cb) {
     if (statusCode === 403) return cb(null, { statusCode: 403, access: null })
     if (statusCode === 404) return cb(null, { statusCode: 404, access: null })
 
-    const findResult = await bucket.getBucketACL(bucketName); // retrieve grants
+    const findResult = await bucket.getBucketACL(bucketName); // retrieve _id and ACL 
     const bucketACL = JSON.stringify(findResult); // marshall _id and ACL to JSON
 
     return cb(null, { bucketACL, statusCode: 200 })
