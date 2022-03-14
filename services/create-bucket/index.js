@@ -10,6 +10,7 @@ const protoLoader = require('@grpc/proto-loader');
 const packageDef = protoLoader.loadSync(PROTO_PATH, {});
 const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
 const svc = protoDescriptor.services;
+const checkAuth = require('./utils/check-grants');
 
 if (process.env.NODE_ENV === "development") {
   var SERVICE_PORT = 7001
@@ -44,16 +45,17 @@ try {
 }
 
 async function createBucket({request}, cb) {
-  const {bucketName, requesterUName} = request;
-  try {
-    const [_, isExist] = await bucket.isBucketExists(bucketName);
+  const { bucketName, requesterUName } = request;
 
-    if (!isExist) {
-      const [statusCode, _] = await bucket.createBucket(bucketName, requesterUName);
-      if (statusCode === 201) return cb(null, {statusCode})
+  try {
+    const statusCode = await checkAuth(bucketName, "", "B", "put", requesterUName);
+    if (statusCode === 200) return cb(null, { statusCode: 409})
+    if (statusCode === 404) {
+      const {insertedId = null } = await bucket.createBucket(bucketName, requesterUName);
+      if (!insertedId) return cb(null, { statusCode: 500 })
     }
 
-    return cb(null, {statusCode:409})
+    return cb(null, { statusCode: 200 })
   } catch(err) {
     return cb(err, null)
   }
