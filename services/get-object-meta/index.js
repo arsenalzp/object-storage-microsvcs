@@ -1,7 +1,5 @@
 'use strict'
 
-const bucket = require('./models/bucket');
-
 const path = require('path');
 const cwd = require('process').cwd();
 const fs = require('fs');
@@ -44,38 +42,25 @@ server.addService(svc.GetObjectMeta.service,
 /**
  * Service.
  * Get metadata of object: 
- * - is object exist?
- * - is user authorized to access object ?
+ * - Does an object exist?
+ * - is user authorized to access an object ?
  * 
  * @param {String} bucketName bucket name
  * @param {String} objectName object name
  * @param {String} requesterUName requester ID
- * @returns {Promise<Array>} resolve Array [Number, Error]
+ * @returns {Promise<Object>} resolve Object
  */
 async function getObjectMeta({ request }, cb) {
   const { bucketName, objectName, requesterUName } = request;
 
   try {
-    const [_, doc] = await bucket.isBucketExists(bucketName);
-    if (!doc) return cb(null, {statusCode: 404})
-    const {_id} = doc;
+    const statusCodeB = await checkAuth(bucketName, "", "B", "get", requesterUName);
+    if (statusCodeB !== 200) return cb(null, { statusCode: statusCodeB, access: null })
 
-    {
-    const statusCode = await checkAuth(_id, "B", "get", requesterUName);
-    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
-    }
-
-    {
-    const [_, doc]  = await bucket.isFileExists(bucketName, objectName)
-    if (!doc) return cb(null, {statusCode: 404})
-    const {_id} = doc;
-    
-    const statusCode = await checkAuth(_id, "O", "get", requesterUName);
-    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
-    }
+    const statusCodeO = await checkAuth(bucketName, objectName, "O", "get", requesterUName);
+    if (statusCodeO !== 200) return cb(null, { statusCode: statusCodeO, access: null })
 
     return cb(null, {statusCode: 200})
-    
   } catch (err) {
     return cb(err, null)
   }

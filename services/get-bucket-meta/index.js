@@ -39,6 +39,17 @@ server.addService(svc.GetBucketMeta.service,
   }
 );
 
+/**
+ * Service.
+ * Get metadata of a bucket: 
+ * - does bucket exist?
+ * - is user authorized to access object ?
+ * 
+ * @param {String} bucketName bucket name
+ * @param {String} requesterUName requester ID
+ * @returns {Promise<Object>} resolve Object
+ */
+
 async function getBucketMeta({ request }, cb) {
   const { bucketName, requesterUName } = request;
 
