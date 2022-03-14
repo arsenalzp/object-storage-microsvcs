@@ -1,8 +1,5 @@
 'use strict'
 
-const bucket = require('./models/bucket');
-const Grants = require('./utils/check-grants');
-
 const path = require('path');
 const cwd = require('process').cwd();
 const fs = require('fs');
@@ -46,14 +43,9 @@ async function getBucketMeta({ request }, cb) {
   const { bucketName, requesterUName } = request;
 
   try {
-    const [_, doc] = await bucket.isBucketExists(bucketName);
-    if (!doc) return cb(null, {statusCode: 404})
-    const {_id} = doc;
-    
-    {
-    const statusCode = await checkAuth(_id, "B", "get", requesterUName);
-    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
-    }
+    const statusCode = await checkAuth(bucketName, "", "B", "get", requesterUName);
+    if (statusCode === 403) return cb(null, { statusCode: 403, access: null })
+    if (statusCode === 404) return cb(null, { statusCode: 404, access: null })
 
     return cb(null, {statusCode: 200})
   } catch (err) {
