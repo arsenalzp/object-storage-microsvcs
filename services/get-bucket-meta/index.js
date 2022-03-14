@@ -55,10 +55,9 @@ async function getBucketMeta({ request }, cb) {
 
   try {
     const statusCode = await checkAuth(bucketName, "", "B", "get", requesterUName);
-    if (statusCode === 403) return cb(null, { statusCode: 403, access: null })
-    if (statusCode === 404) return cb(null, { statusCode: 404, access: null })
+    if (statusCode !== 200) return cb(null, { statusCode: statusCode })
 
-    return cb(null, {statusCode: 200})
+    return cb(null, { statusCode: 200 })
   } catch (err) {
     return cb(err, null)
   }

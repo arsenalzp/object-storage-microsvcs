@@ -55,12 +55,12 @@ async function getObjectMeta({ request }, cb) {
 
   try {
     const statusCodeB = await checkAuth(bucketName, "", "B", "get", requesterUName);
-    if (statusCodeB !== 200) return cb(null, { statusCode: statusCodeB, access: null })
+    if (statusCodeB !== 200) return cb(null, { statusCode: statusCodeB })
 
     const statusCodeO = await checkAuth(bucketName, objectName, "O", "get", requesterUName);
-    if (statusCodeO !== 200) return cb(null, { statusCode: statusCodeO, access: null })
+    if (statusCodeO !== 200) return cb(null, { statusCode: statusCodeO })
 
-    return cb(null, {statusCode: 200})
+    return cb(null, { statusCode: 200 })
   } catch (err) {
     return cb(err, null)
   }

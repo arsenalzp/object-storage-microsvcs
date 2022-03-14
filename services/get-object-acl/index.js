@@ -44,16 +44,12 @@ server.addService(svc.GetObjectAcl.service,
 async function getObjectACL({request}, cb) {
   const { bucketName, objectName, requesterUName } = request;
   try {
-    {
-      const statusCode = await checkAuth(bucketName, "", "B", "get", requesterUName);
-      if (statusCode === 403) return cb(null, { statusCode: 403, access: null })
-      if (statusCode === 404) return cb(null, { statusCode: 404, access: null })
-    }
+    const statusCodeB = await checkAuth(bucketName, "", "B", "get", requesterUName);
+    if (statusCodeB !== 200) return cb(null, { statusCode: statusCodeB, access: null })
     
-    const statusCode = await checkAuth(bucketName, objectName, "O", "get", requesterUName);
-    if (statusCode === 403) return cb(null, { statusCode: 403, access: null })
-    if (statusCode === 404) return cb(null, { statusCode: 404, access: null })
-    
+    const statusCodeO = await checkAuth(bucketName, objectName, "O", "get", requesterUName);
+    if (statusCodeO !== 200) return cb(null, { statusCode: statusCodeO, access: null })
+
     const findResult = await bucket.getObjectACL(bucketName, objectName);
     const objectACL = JSON.stringify(findResult);
 

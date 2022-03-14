@@ -47,9 +47,8 @@ async function putBucketACL({ request }, cb) {
 
   try {
     const statusCode = await checkAuth(bucketName, "", "B", "put", requesterUName);
-    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
-    if (statusCode === 404) return cb(null, { statusCode: 404, grants: null })
-
+    if (statusCode !== 200) return cb(null, { statusCode: statusCode })
+    
     const modifiedGrants = parseGrants(targetGrants); // set bucket ACL
     await bucket.putBucketACL(bucketName, targetUName, modifiedGrants);
 

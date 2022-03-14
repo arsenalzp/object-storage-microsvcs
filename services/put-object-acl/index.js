@@ -46,15 +46,11 @@ async function putObjectACL({ request }, cb) {
   const { bucketName, objectName, requesterUName, targetUName, targetGrants } = request;
 
   try {
-    const statusCode = await checkAuth(bucketName, "", "B", "put", requesterUName);
-    if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
-    if (statusCode === 404) return cb(null, { statusCode: 404, grants: null })
+    const statusCodeB = await checkAuth(bucketName, "", "B", "put", requesterUName);
+    if (statusCodeB !== 200) return cb(null, { statusCode: statusCodeB })
     
-    {
-      const statusCode = await checkAuth(bucketName, objectName, "O", "put", requesterUName);
-      if (statusCode === 403) return cb(null, { statusCode: 403, grants: null })
-      if (statusCode === 404) return cb(null, { statusCode: 404, grants: null })
-    }
+    const statusCodeO = await checkAuth(bucketName, objectName, "O", "put", requesterUName);
+    if (statusCodeO !== 200) return cb(null, { statusCode: statusCodeO })
 
     const modifiedGrants = parseGrants(targetGrants); // set object ACL
     await bucket.putObjectACL(bucketName, objectName, targetUName, modifiedGrants);
