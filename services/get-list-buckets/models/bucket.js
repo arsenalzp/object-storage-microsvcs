@@ -3,30 +3,30 @@
 const DBNAME = 'buckets'; // MongoDB DB name
 const BCOLLECTION = 'bucketsCollection'; // MongoDB collection of buckets
 
-const { client } = require('../utils/db');
+const { client } = require('../clients/db');
 
 /**
  * Get list of buckets belonging to the particular user
  * 
  * @param {String} requesterUName requester ID
- * @returns {Promise<Array>} resolve Array [Number, Object]
+ * @returns {Promise<Array>} resolve Array
  */
-async function getBuckets(requesterUName) {
+async function getListBuckets(requesterUName) {
   try {
     const db = (await client()).db(DBNAME);
 
-    const dbFindResult = await db
+    const findResult = await db
       .collection(BCOLLECTION)
       .find(
         {
           "owner": requesterUName
         },
         {
-        projection: { grants: 0, owner: 0, files: 0}
+        projection: { _id: 0 , access: 0, owner: 0, filesList: 0, createdAt: 0}
         })
       .toArray();
 
-    return [200, dbFindResult]
+    return findResult
   } catch (err) {
     throw {
       exitCode: 500,
@@ -35,7 +35,6 @@ async function getBuckets(requesterUName) {
   }
 }
 
-
 module.exports = {
-  getBuckets
+  getListBuckets
 }
