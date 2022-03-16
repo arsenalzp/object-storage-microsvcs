@@ -1,7 +1,6 @@
 'use strict'
 
 const bucket = require('./models/bucket');
-const Grants = require('./utils/check-grants');
 
 const path = require('path');
 const cwd = require('process').cwd();
@@ -12,6 +11,7 @@ const protoLoader = require('@grpc/proto-loader');
 const packageDef = protoLoader.loadSync(PROTO_PATH, {});
 const protoDescriptor =  grpc.loadPackageDefinition(packageDef);
 const svc = protoDescriptor.services;
+const checkAuth = require('./utils/check-grants');
 
 if (process.env.NODE_ENV === "development") {
   var SERVICE_PORT = 7001
@@ -45,20 +45,13 @@ async function getListObjects({request}, cb) {
   const { bucketName, requesterUName } = request;
 
   try {
-    const [_, isExist] = await bucket.isBucketExists(bucketName);
-    if (!isExist) return cb(null, {statusCode:404, objects: null})
+    const statusCode = await checkAuth(bucketName, "", "B", "get", requesterUName);
+    if (statusCode !== 200) return cb(null, { statusCode: statusCode, access: null })
 
-    {
-    const [_, grants] = await bucket.getObjectOrBucketACL(bucketName, null); // retrieve grants
-    const manageAuth = new Grants(requesterUName, grants, null, null);
-    const isAuthorized = manageAuth.checkAccess('get'); // check user grants against GET method
-    if (!isAuthorized) return cb(null, {statusCode:403, objects: null})
-    }
+    const findResult  = await bucket.listObjects(bucketName);
+    const objList = JSON.stringify(findResult); // marshall an objects list to JSON
 
-    const [statusCode, objects]  = await bucket.listObjects(bucketName);
-    const serializedObjects = JSON.stringify(objects); // marshall an objects list to JSON
-
-    return cb(null, {statusCode, objects:serializedObjects})
+    return cb(null, { statusCode: 200, objects: objList})
   } catch (err) {
     return cb(err, null)
   }
