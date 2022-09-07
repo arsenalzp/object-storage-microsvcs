@@ -50,10 +50,7 @@ async function putBucketACL(bucketName, targetUName, newGrants) {
 
     return updateResult
   } catch (err) {
-    throw {
-      exitCode: 500,
-      message: err.message
-    }
+    throw err
   }
 }
 

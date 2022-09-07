@@ -21,8 +21,8 @@ if (process.env.NODE_ENV === "production") {
 
 const tlsCreds = {
   cacert: fs.readFileSync(path.join(__dirname, 'tls', 'rootCA.crt')),
-  srvcert: fs.readFileSync(path.join(__dirname, 'tls', 'server.objstorage.crt')),
-  srvkey: fs.readFileSync(path.join(__dirname, 'tls', 'server.objstorage.key'))
+  srvcert: fs.readFileSync(path.join(__dirname, 'tls', 'server.crt')),
+  srvkey: fs.readFileSync(path.join(__dirname, 'tls', 'server.key'))
 };
 
 const server = new grpc.Server();
@@ -45,8 +45,17 @@ async function getListBuckets({request}, cb) {
     const findResult = await bucket.getListBuckets(requesterUName); 
     const buckets = JSON.stringify(findResult);
 
-     return cb(null, {statusCode: 200, buckets})
+     return cb(null, { statusCode: 200, buckets })
     } catch (err) {
-      return cb(err, null)
+      console.log('%s An error has occurred: %s', new Date().toLocaleString(), err);
+      
+      return cb(err, { statusCode: 200 })
     }
 }
+
+console.log('%s Listening on %s port', new Date().toLocaleString(), SERVICE_PORT);
+
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});

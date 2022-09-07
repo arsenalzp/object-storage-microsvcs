@@ -27,7 +27,10 @@ exports.client = async () => {
     }
     return connection
   } catch(err) {
-    throw err
+    throw {
+      statusCode: 500,
+      message: err.message
+    }
   }
 }
 

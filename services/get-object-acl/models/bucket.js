@@ -28,10 +28,7 @@ async function getObjectACL(bucketName, objectName) {
 
     return findResult
   } catch (err) {
-    throw {
-      exitCode: 500,
-      message: err.message
-    }
+    throw err
   }
 }
 

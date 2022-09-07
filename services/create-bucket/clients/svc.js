@@ -11,14 +11,16 @@ if (process.env.NODE_ENV === "development") {
 }
 
 const tlsCreds = {
-  cacert: fs.readFileSync(path.join(__dirname, 'tls', 'rootCA.crt')),
-  clntcert: fs.readFileSync(path.join(__dirname, 'tls', 'client.objstorage.crt')),
-  clntkey: fs.readFileSync(path.join(__dirname, 'tls', 'client.objstorage.key'))
+  ca: fs.readFileSync(path.join(__dirname, 'tls', 'rootCA.crt')),
+  cert: fs.readFileSync(path.join(__dirname, 'tls', 'tls.crt')),
+  key: fs.readFileSync(path.join(__dirname, 'tls', 'tls.key'))
 };
 
 const OPTIONS = {
-  ca: tlsCreds.cacert,
-  rejectUnauthorized: false, // only for dev environment!!
+  ca: [tlsCreds.ca],
+  key: tlsCreds.key,
+  cert: tlsCreds.cert,
+  requestCert: true
 };
 
 const service = {

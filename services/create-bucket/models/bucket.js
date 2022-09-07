@@ -31,10 +31,7 @@ async function createBucket(bucketName, requesterUName) {
 
     return insertResult
   } catch (err) {
-    throw {
-      exitCode: 500,
-      message: err.message
-    }
+    throw err
   }
 }
 

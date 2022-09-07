@@ -1,11 +1,13 @@
+'use strict'
+
 const clientAuthSvc = require('../clients/svc');
 
 function isAuth(bucketName, objectName, ent_type, op, user) {
   const session = clientAuthSvc.connect();
 
   return new Promise((resolve, reject) => {
-    session.on('error', (err) => { 
-      reject(500)
+    session.on('error', (err) => {
+      reject(err)
     });
     
     // instantiate HTTP/2 stream by requesting remote URL
@@ -21,9 +23,8 @@ function isAuth(bucketName, objectName, ent_type, op, user) {
       resolve(statusCode)
     });
 
-    serviceResp.on('error', () => {
-      console.log('Connecting to auth service faild');
-      reject(500)
+    serviceResp.on('error', (err) => {
+      reject(err)
     });
   });
 }

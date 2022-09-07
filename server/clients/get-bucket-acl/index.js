@@ -18,15 +18,14 @@ if (process.env.NODE_ENV === "production") {
 }
 
 const tlsCreds = {
-  cacert: fs.readFileSync(path.join(__dirname, 'tls', 'rootCA.crt')),
-  clntcert: fs.readFileSync(path.join(__dirname, 'tls', 'client.objstorage.crt')),
-  clntkey: fs.readFileSync(path.join(__dirname, 'tls', 'client.objstorage.key'))
+  ca: fs.readFileSync(path.join(__dirname, '..','tls', 'rootCA.crt')),
+  cert: fs.readFileSync(path.join(__dirname, '..','tls', 'tls.crt')),
+  key: fs.readFileSync(path.join(__dirname, '..','tls', 'tls.key'))
 };
 
 const client = new protoDescriptor.services.GetBucketAcl(
   `${GET_BUCKET_ACL_SVC_HOST}:${GET_BUCKET_ACL_SVC_PORT}`,
-  grpc.credentials.createSsl(tlsCreds.cacert, tlsCreds.clntkey, tlsCreds.clntcert),
-  {'grpc.ssl_target_name_override' : 'client.objstorage.local'}
+  grpc.credentials.createSsl(tlsCreds.ca, tlsCreds.key, tlsCreds.cert)
 );
 
 module.exports = client;

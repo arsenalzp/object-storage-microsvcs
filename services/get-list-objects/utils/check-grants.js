@@ -5,7 +5,7 @@ function isAuth(bucketName, objectName, ent_type, op, user) {
 
   return new Promise((resolve, reject) => {
     session.on('error', (err) => { 
-      reject(500)
+      reject(err)
     });
     
     // instantiate HTTP/2 stream by requesting remote URL
@@ -21,9 +21,8 @@ function isAuth(bucketName, objectName, ent_type, op, user) {
       resolve(statusCode)
     });
 
-    serviceResp.on('error', () => {
-      console.log('Connecting to auth service faild');
-      reject(500)
+    serviceResp.on('error', (err) => {
+      reject(err)
     });
   });
 }

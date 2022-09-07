@@ -10,11 +10,11 @@ const LOGS_PATH = process.env.LOGS_PATH || (path.join(process.cwd(), 'logs'));
  
 // Define a key and a cert
 // You can get a key and a cert from the Secret manifest
-const TLSKEY = process.env.TLSKEY || fs.readFileSync(path.join(process.cwd(), 'tls', 'default-key.pem'));
-const TLSCRT= process.env.TLSCRT ||  fs.readFileSync(path.join(process.cwd(), 'tls', 'default-cert.pem'));
+const KEY = fs.readFileSync(path.join(process.cwd(), 'tls', 'server.key'));
+const CERT = fs.readFileSync(path.join(process.cwd(), 'tls', 'server.crt'));
 const OPTIONS = {
-	key: TLSKEY,
-	cert: TLSCRT,
+	key: KEY,
+	cert: CERT,
 	rejectUnauthorized: false
 };
 
@@ -34,12 +34,12 @@ const genReqId = require('./middleware/reqid-generator');
 const handleError = require('./middleware/error-handler');
 const logRequest = require('./middleware/request-logger');
 const checkParams = require('./middleware/params-ckecker');
-const { http } = require('winston');
 
 // Create new memory storage for multer
 const storage = multer.memoryStorage()
 const upload = multer({storage: storage})
 
+// Define length of incoming paramethers
 checkParams.fileNameLen(64);
 checkParams.bucketNameLen(16);
 
@@ -114,8 +114,8 @@ app.use((err, req, res, next) => {
 const server = https.createServer(OPTIONS, app);
 
 server.listen(APP_PORT, () => {
-	console.log(`Listening on ${APP_PORT} port`);
-
+	console.log('%s Listening on %s port', new Date().toLocaleString(), APP_PORT);
+	
 	// Catch unhandled promise rejection
 	process.on('unhandledRejection', (reason, promise) => {
     console.log('Unhandled Rejection at:', promise, 'reason:', reason);
