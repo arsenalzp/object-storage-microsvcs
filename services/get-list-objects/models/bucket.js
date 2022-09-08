@@ -1,5 +1,6 @@
 'use strict'
 
+const Error = require('../errors');
 const DBNAME = 'buckets'; // MongoDB DB name
 const FCOLLECTION = 'filesCollection'; // MongoDB collection of files
 
@@ -27,6 +28,7 @@ async function listObjects(bucketName) {
 
     return findResult
   } catch (err) {
+    err = new Error('bucket error', Error.BcktReqErr, err);
     throw err
   }
 }

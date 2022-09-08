@@ -1,5 +1,6 @@
 'use strict'
 
+const Error = require('../errors');
 const DBNAME = 'buckets'; // MongoDB DB name
 const BCOLLECTION = 'bucketsCollection'; // MongoDB collection of buckets
 
@@ -27,6 +28,7 @@ async function getBucketACL(bucketName) {
 
       return findResult
   } catch (err) {
+    err = new Error('bucket error', Error.BcktReqErr, err);
     throw err
   }
 }

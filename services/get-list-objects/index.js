@@ -53,7 +53,7 @@ async function getListObjects({request}, cb) {
 
     return cb(null, { statusCode: 200, objects: objList})
   } catch (err) {
-    console.log('%s An error has occurred: %s', new Date().toLocaleString(), err);
+    console.log('%s %s', new Date().toLocaleString(), err);
     
     return cb(err, { statusCode: 200 })
   }

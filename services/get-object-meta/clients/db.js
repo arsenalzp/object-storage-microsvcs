@@ -1,3 +1,10 @@
+const Error = require('../errors');
+const { MongoClient, GridFSBucket } = require('mongodb');
+const options = {
+  useUnifiedTopology: true,
+  maxPoolSize: 200
+}
+
 if (process.env.NODE_ENV === "development") {
   var DB_HOST = 'localhost';
   var DB_PORT = 27017;
@@ -9,12 +16,6 @@ if (process.env.NODE_ENV === "production") {
 }
 
 const URL = `mongodb://${DB_HOST}:${DB_PORT}`;
-
-const { MongoClient, GridFSBucket } = require('mongodb');
-const options = {
-  useUnifiedTopology: true,
-  maxPoolSize: 200
-}
 
 let connection = null;
 

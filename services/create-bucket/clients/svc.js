@@ -1,6 +1,7 @@
 const http2 = require('http2');
 const fs = require('fs');
 const path = require('path');
+const Error = require('../errors');
 
 if (process.env.NODE_ENV === "development") {
   var AUTH_SVC_HOST = 'localhost';
@@ -10,11 +11,17 @@ if (process.env.NODE_ENV === "development") {
   var AUTH_SVC_PORT  = process.env.AUTH_SVC_PORT;
 }
 
-const tlsCreds = {
-  ca: fs.readFileSync(path.join(__dirname, 'tls', 'rootCA.crt')),
-  cert: fs.readFileSync(path.join(__dirname, 'tls', 'tls.crt')),
-  key: fs.readFileSync(path.join(__dirname, 'tls', 'tls.key'))
-};
+try {
+  var tlsCreds = {
+    ca: fs.readFileSync(path.join(__dirname, 'tls', 'rootCA.crt')),
+    cert: fs.readFileSync(path.join(__dirname, 'tls', 'tls.crt')),
+    key: fs.readFileSync(path.join(__dirname, 'tls', 'tls.key'))
+  }
+} catch(err) {
+  err = new Error('service client error',Error.SvcClntErr,err);
+  throw err
+}
+
 
 const OPTIONS = {
   ca: [tlsCreds.ca],

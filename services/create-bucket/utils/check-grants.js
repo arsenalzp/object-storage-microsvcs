@@ -1,12 +1,14 @@
 'use strict'
 
 const clientAuthSvc = require('../clients/svc');
+const Error = require('../errors');
 
 function isAuth(bucketName, objectName, ent_type, op, user) {
   const session = clientAuthSvc.connect();
 
   return new Promise((resolve, reject) => {
     session.on('error', (err) => {
+      err = new Error('auth service connection err', Error.ChkGrantErr, err);
       reject(err)
     });
     
@@ -24,6 +26,7 @@ function isAuth(bucketName, objectName, ent_type, op, user) {
     });
 
     serviceResp.on('error', (err) => {
+      err = new Error('auth service connection err', Error.ChkGrantErr, err);
       reject(err)
     });
   });

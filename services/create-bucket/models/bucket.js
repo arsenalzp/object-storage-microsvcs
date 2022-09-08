@@ -1,8 +1,8 @@
 'use strict'
 
+const Error = require('../errors');
 const DBNAME = 'buckets'; // MongoDB DB name
 const BCOLLECTION = 'bucketsCollection'; // MongoDB collection of buckets
-
 const { client } = require('../clients/db');
 
 /**
@@ -14,7 +14,7 @@ const { client } = require('../clients/db');
  */
 async function createBucket(bucketName, requesterUName) {
   try {
-    const db = (await client()).db(DBNAME)
+    const db = (await client()).db(DBNAME);
     
     const col = db.collection(BCOLLECTION);
     const insertResult = await col.insertOne(
@@ -31,6 +31,7 @@ async function createBucket(bucketName, requesterUName) {
 
     return insertResult
   } catch (err) {
+    err = new Error('bucket error', Error.BcktReqErr, err);
     throw err
   }
 }

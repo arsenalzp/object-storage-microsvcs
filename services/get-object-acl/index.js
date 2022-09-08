@@ -55,7 +55,7 @@ async function getObjectACL({request}, cb) {
 
     return cb(null, { objectACL, statusCode: 200 })
   } catch (err) {
-    console.log('%s An error has occurred: %s', new Date().toLocaleString(), err);
+    console.log('%s %s', new Date().toLocaleString(), err);
     
     return cb(err, { statusCode: 200 })
   }
