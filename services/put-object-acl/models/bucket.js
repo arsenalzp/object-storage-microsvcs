@@ -2,7 +2,7 @@
 
 const Error = require('../errors');
 const DBNAME = 'buckets'; // MongoDB DB name
-const FCOLLECTION = 'filesCollection'; // MongoDB collection of files
+const OCOLLECTION = 'objectsCollection'; // MongoDB collection of objects
 
 const { client } = require('../clients/db');
 
@@ -18,12 +18,12 @@ const { client } = require('../clients/db');
 async function putObjectACL(bucketName, objectName, targetUName, newGrants) {
   try {
     const db = (await client()).db(DBNAME);
-    const col = db.collection(FCOLLECTION)
+    const col = db.collection(OCOLLECTION)
 
     const findResult = await col.findOne(
       { 
         "bucketName": bucketName,
-        "fileName": objectName, 
+        "objectName": objectName, 
         "access.userName": targetUName
       })
     
@@ -32,7 +32,7 @@ async function putObjectACL(bucketName, objectName, targetUName, newGrants) {
       const updateResult = await col.updateOne(
         { 
           "bucketName": bucketName, 
-          "fileName": objectName
+          "objectName": objectName
         },
         { 
           $push: { "access": {"userName": targetUName, "grants":newGrants} }
@@ -45,7 +45,7 @@ async function putObjectACL(bucketName, objectName, targetUName, newGrants) {
     const updateResult = await col.updateOne(
       { 
         "bucketName": bucketName, 
-        "fileName": objectName, 
+        "objectName": objectName, 
         "access.userName": targetUName
       },
       { 

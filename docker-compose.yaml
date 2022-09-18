@@ -121,7 +121,6 @@ services:
   manage-object:
    container_name: manage-object
    hostname: manage-object.example.com
-   user: "arsenal"
    build: ./services/manage-object
    working_dir: /app
    environment:
@@ -137,7 +136,6 @@ services:
   get-auth:
    container_name: get-auth
    hostname: get-auth.example.com
-   user: "arsenal"
    build: ./services/get-auth
    working_dir: /app
    environment:
@@ -167,26 +165,26 @@ services:
     CREATE_BUCKET_SVC_PORT: 7001
     DELETE_KEY_SVC_HOST: manage-object.local.example.com
     DELETE_KEY_SVC_PORT: 7001
-    GET_BUCKET_ACL_SVC_HOST: get-bucket-acl.local
+    GET_BUCKET_ACL_SVC_HOST: get-bucket-acl.example.com
     GET_BUCKET_ACL_SVC_PORT: 7001
-    GET_BUCKET_META_SVC_HOST: get-bucket-meta.local
+    GET_BUCKET_META_SVC_HOST: get-bucket-meta.example.com
     GET_BUCKET_META_SVC_PORT: 7001
-    GET_LIST_BUCKETS_SVC_HOST: get-list-buckets.local
+    GET_LIST_BUCKETS_SVC_HOST: get-list-buckets.example.com
     GET_LIST_BUCKETS_SVC_PORT: 7001
-    GET_LIST_OBJECTS_SVC_HOST: get-list-objects.local
+    GET_LIST_OBJECTS_SVC_HOST: get-list-objects.example.com
     GET_LIST_OBJECTS_SVC_PORT: 7001
-    GET_OBJECT_ACL_SVC_HOST: get-object-acl.local
+    GET_OBJECT_ACL_SVC_HOST: get-object-acl.example.com
     GET_OBJECT_ACL_SVC_PORT: 7001
-    GET_OBJECT_META_SVC_HOST: get-object-meta.local
+    GET_OBJECT_META_SVC_HOST: get-object-meta.example.com
     GET_OBJECT_META_SVC_PORT: 7001
-    PUT_BUCKET_ACL_SVC_HOST: put-bucket-acl.local
+    PUT_BUCKET_ACL_SVC_HOST: put-bucket-acl.example.com
     PUT_BUCKET_ACL_SVC_PORT: 7001
-    PUT_OBJECT_ACL_SVC_HOST: put-object-acl.local
+    PUT_OBJECT_ACL_SVC_HOST: put-object-acl.example.com
     PUT_OBJECT_ACL_SVC_PORT: 7001
     GET_OBJECT_SVC_HOST: manage-object.example.com
     GET_OBJECT_SVC_PORT: 7001
     PUT_OBJECT_SVC_HOST: manage-object.example.com
     PUT_OBJECT_SVC_PORT: 7001
-    LOGS_PATH: './logs'
+    #LOGS_PATH: './logs'
    ports: 
     - 8080:8080

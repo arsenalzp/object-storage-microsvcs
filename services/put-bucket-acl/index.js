@@ -24,8 +24,8 @@ if (process.env.NODE_ENV === "production") {
 
 const tlsCreds = {
   cacert: fs.readFileSync(path.join(__dirname, 'tls', 'rootCA.crt')),
-  srvcert: fs.readFileSync(path.join(__dirname, 'tls', 'server.crt')),
-  srvkey: fs.readFileSync(path.join(__dirname, 'tls', 'server.key'))
+  srvcert: fs.readFileSync(path.join(__dirname, 'tls', 'tls.crt')),
+  srvkey: fs.readFileSync(path.join(__dirname, 'tls', 'tls.key'))
 };
 
 const server = new grpc.Server();

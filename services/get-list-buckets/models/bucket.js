@@ -23,7 +23,7 @@ async function getListBuckets(requesterUName) {
           "owner": requesterUName
         },
         {
-          projection: { _id: 0 , access: 0, owner: 0, filesList: 0, createdAt: 0}
+          projection: { _id: 0 , access: 0, owner: 0, objectsList: 0, createdAt: 0}
         })
       .toArray();
 

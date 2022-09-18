@@ -45,7 +45,7 @@ class ParamsChecker {
     }
 
     // set object name length
-    f.fileNameLen = (oNameLen) => {
+    f.objNameLen = (oNameLen) => {
       this._oNameLen = oNameLen;
       return this
     }

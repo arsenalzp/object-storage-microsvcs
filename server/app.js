@@ -40,7 +40,7 @@ const storage = multer.memoryStorage()
 const upload = multer({storage: storage})
 
 // Define length of incoming paramethers
-checkParams.fileNameLen(64);
+checkParams.objNameLen(64);
 checkParams.bucketNameLen(16);
 
 // Init express

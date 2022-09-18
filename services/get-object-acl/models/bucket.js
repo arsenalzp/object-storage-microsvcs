@@ -2,7 +2,7 @@
 
 const Error = require('../errors');
 const DBNAME = 'buckets'; // MongoDB DB name
-const FCOLLECTION = 'filesCollection'; // MongoDB collection of files
+const OCOLLECTION = 'objectsCollection'; // MongoDB collection of objects
 
 const { client } = require('../clients/db');
 
@@ -17,11 +17,11 @@ async function getObjectACL(bucketName, objectName) {
   try {
     const db = (await client()).db(DBNAME);
     const findResult = await db
-      .collection(FCOLLECTION)
+      .collection(OCOLLECTION)
       .findOne(
         {
           "bucketName": bucketName, 
-          "fileName": objectName
+          "objectName": objectName
         },
         {
           projection: { _id: 1, access: 1 }

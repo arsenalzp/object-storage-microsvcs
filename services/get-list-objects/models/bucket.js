@@ -2,7 +2,7 @@
 
 const Error = require('../errors');
 const DBNAME = 'buckets'; // MongoDB DB name
-const FCOLLECTION = 'filesCollection'; // MongoDB collection of files
+const OCOLLECTION = 'objectsCollection'; // MongoDB collection of objects
 
 const { client } = require('../clients/db');
 
@@ -17,7 +17,7 @@ async function listObjects(bucketName) {
     const db = (await client()).db(DBNAME);
 
     const findResult = await db
-      .collection(FCOLLECTION)
+      .collection(OCOLLECTION)
       .find(
         { 
           "bucketName": bucketName,
