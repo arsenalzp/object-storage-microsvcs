@@ -4,6 +4,7 @@ const clientCreateBucket = require('../clients/create-bucket');
 const clientPutObjectAcl = require('../clients/put-object-acl');
 const clientPutBucketAcl = require('../clients/put-bucket-acl');
 const clientPutObject = require('../clients/put-object');
+const clientPutBucketVers = require('../clients/put-bucket-versioning');
 
 const User = require('../models/user');
 const user = new User();
@@ -17,6 +18,7 @@ user.setUserId();
  * - putObjectACL to put a new ACLs for the object
  * - putBucketACL to put a new ACLs for the bucket
  * - putObject to put a new object into the bucket
+ * - putBucketVersioning to put versioning status for the bucket
  * 
  * @param {Object} req HTTP request
  * @param {Object} res HTTP response
@@ -26,6 +28,7 @@ async function put(req, res, next) {
   const bucketName = req.params.bucketId; // retrieve a bucket name
   const objectName = req.params.objectName ? req.params.objectName : null; // retrieve a file name
   const aclMethod = req.query.acl ? req.query.acl : null; // retrieve acl query param
+  const versioning = req.query.versioning ? req.query.versioning : null; // retrieve versioning query param
   const key = req.key; // Authorization signature
 
   try {
@@ -169,6 +172,25 @@ async function put(req, res, next) {
         err.statusCode = 500;
         return next(err)
       });
+    } else if (bucketName && !objectName && !aclMethod && versioning) {
+      /**
+       * bucket name and versionning are defined - call PutBucketVersioning
+       * with bucket name and versioning status parameters
+       */
+      clientPutBucketVers.PutBucketVersioning(
+        { bucketName, versioning },
+        (err, resp) => {
+
+          if (err) {
+            err.statusCode = 500;
+            return next(err)
+          }
+          
+          const { statusCode } = resp;
+
+          return res.status(statusCode).end()
+        }
+      );
     } else {
       /**
        * if services didn't match

@@ -26,7 +26,8 @@ async function createBucket(bucketName, requesterUName) {
           "userName":requesterUName,
           "grants": 7 // bitmask "111"
         }],
-        objectsList: []
+        objectsList: [],
+        "versioning": false
       })
 
     return insertResult

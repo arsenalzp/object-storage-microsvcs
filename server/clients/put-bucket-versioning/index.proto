@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package services;
+
+service PutBucketVersioning {
+  rpc PutBucketVersioning (Request) returns (Response);
+}
+
+message Request {
+  string bucketName = 1; 
+  bool versioningStatus = 2; 
+}
+
+message Response {
+  uint32 statusCode = 1;
+}
