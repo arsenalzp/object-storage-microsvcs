@@ -144,7 +144,7 @@ func HandlePutObj(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// then update it on FS
-	err = fs.CreateUpdateObject(*objId, &r.Body, curTime)
+	err = fs.CreateUpdateObject(objId, &r.Body, curTime)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		err = errors.New("handler error:", errors.HndlrPutFsUpdErr, err)

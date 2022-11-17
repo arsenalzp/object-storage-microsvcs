@@ -117,19 +117,16 @@ func InsertOne(ctx context.Context, newObj *ent.Object) (*ent.ObjectId, error) {
 func UpdateOneVersion(ctx context.Context, updObj *ent.Object, operator, operand string, version *ent.Version) (*ent.Object, error) {
 	defer ctx.Done()
 
-	var update bson.M
-
 	filter := bson.M{
 		"bucketName": updObj.BucketName,
 		"objectName": updObj.ObjectName,
 	}
 
-	update = bson.M{
+	versListUpdate := bson.M{
 		operator: bson.M{
 			operand: bson.M{
-				"_id":            primitive.ObjectID(version.ObjectId),
-				"versionId":      version.VersionId,
-				"CurrentVersion": true,
+				"_id":       primitive.ObjectID(version.ObjectId),
+				"versionId": version.VersionId,
 			},
 		},
 	}
@@ -139,7 +136,7 @@ func UpdateOneVersion(ctx context.Context, updObj *ent.Object, operator, operand
 		return nil, err
 	}
 
-	res := db.Collection(OCOLLECTION).FindOneAndUpdate(ctx, filter, update)
+	res := db.Collection(OCOLLECTION).FindOneAndUpdate(ctx, filter, versListUpdate)
 	doc, err := decode(res, OCOLLECTION)
 	if err != nil {
 		return nil, err
@@ -155,14 +152,13 @@ func UpdateOneVersion(ctx context.Context, updObj *ent.Object, operator, operand
 // returns MatchedCount, ModifiedCount and error
 func UpdateOne(ctx context.Context, updObj *ent.Object) (*ent.Object, error) {
 	defer ctx.Done()
-	var update bson.M
 
 	filter := bson.M{
 		"bucketName": updObj.BucketName,
 		"objectName": updObj.ObjectName,
 	}
 
-	update = bson.M{
+	update := bson.M{
 		"$set": bson.M{
 			"lastUpdate": updObj.LastUpdate,
 		},
@@ -184,11 +180,11 @@ func UpdateOne(ctx context.Context, updObj *ent.Object) (*ent.Object, error) {
 	return obj, err
 }
 
-func FindByIdAndDelte(ctx context.Context, objId ent.ObjectId) error {
+func FindByIdAndDelte(ctx context.Context, objId *ent.ObjectId) error {
 	defer ctx.Done()
 
 	query := bson.M{
-		"_id": primitive.ObjectID(objId),
+		"_id": primitive.ObjectID(*objId),
 	}
 
 	db, err := client.DbConnect()
@@ -227,6 +223,29 @@ func FindOneAndDel(ctx context.Context, delObj *ent.Object) (*ent.Object, error)
 	obj := doc.(*ent.Object)
 
 	return obj, nil
+}
+
+func UpdateOneRootObj(ctx context.Context, newRootObj *ent.Object) error {
+	defer ctx.Done()
+
+	db, err := client.DbConnect()
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{
+		"_id": newRootObj.ObjectId,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"currentVersion": newRootObj.CurrentVersion,
+		},
+	}
+
+	_, err = db.Collection(OCOLLECTION).UpdateOne(ctx, filter, update)
+
+	return err
 }
 
 func FindOneAndReplace(ctx context.Context, oldObj *ent.Object) (*ent.Object, error) {

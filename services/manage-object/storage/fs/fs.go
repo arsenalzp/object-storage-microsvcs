@@ -33,7 +33,7 @@ func GetObject(objId ent.ObjectId) (*bufio.Reader, *os.File, error) {
 	return reader, file, nil
 }
 
-func CreateUpdateObject(objId ent.ObjectId, body *io.ReadCloser, curTime time.Time) error {
+func CreateUpdateObject(objId *ent.ObjectId, body *io.ReadCloser, curTime time.Time) error {
 	objPath := filepath.Join(OBJSTORE_PATH, objId.IdToStr())
 	file, err := os.OpenFile(objPath, os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {

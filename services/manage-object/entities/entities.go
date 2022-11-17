@@ -14,26 +14,26 @@ type Access struct {
 }
 
 type VersionId string
-type CurrentVersion bool
 
 type Version struct {
-	ObjectId       `bson:"_id"`
-	VersionId      `bson:"versionId"`
-	CurrentVersion `bson:"currentVersion"`
+	ObjectId  `bson:"_id"`
+	VersionId `bson:"versionId"`
 }
 
 type ObjectId primitive.ObjectID
 type BucketId primitive.ObjectID
+type CurrentVersion primitive.ObjectID
 
 type Object struct {
-	ObjectId     primitive.ObjectID `bson:"_id,omitempty"`
-	ObjectName   string             `bson:"objectName,omitempty"`
-	BucketName   string             `bson:"bucketName,omitempty"`
-	Created      time.Time          `bson:"created,omitempty"`
-	LastUpdate   time.Time          `bson:"lastUpdate,omitempty"`
-	GrantsArray  []Access           `bson:"access,omitempty"`
-	VersionsList []Version          `bson:"version,omitempty"`
-	VersionId    `bson:"versionId,omitempty"`
+	ObjectId       primitive.ObjectID `bson:"_id,omitempty"`
+	ObjectName     string             `bson:"objectName,omitempty"`
+	BucketName     string             `bson:"bucketName,omitempty"`
+	Created        time.Time          `bson:"created,omitempty"`
+	LastUpdate     time.Time          `bson:"lastUpdate,omitempty"`
+	GrantsArray    []Access           `bson:"access,omitempty"`
+	VersionsList   []Version          `bson:"version,omitempty"`
+	VersionId      `bson:"versionId,omitempty"`
+	CurrentVersion VersionId `bson:"currentVersion,omitempty"`
 }
 
 type Bucket struct {

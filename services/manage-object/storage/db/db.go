@@ -63,8 +63,8 @@ func UpdateObject(ctx context.Context, bucketName string, objectName string, tou
 	return oldObj, nil
 }
 
-func CreateObjectVers(ctx context.Context, bucketName string, objectName string, requesterUName string, curTime time.Time) (ent.ObjectId, error) {
-	var versionId string = versionId.GenerateVersionId(32)
+func CreateObjectVers(ctx context.Context, bucketName string, objectName string, requesterUName string, curTime time.Time) (*ent.ObjectId, error) {
+	var versionId ent.VersionId = versionId.GenerateVersionId(32)
 
 	var newObjVersion *ent.Object = &ent.Object{
 		BucketName: bucketName,
@@ -75,20 +75,30 @@ func CreateObjectVers(ctx context.Context, bucketName string, objectName string,
 				Grants: 6,
 			},
 		},
-		VersionId: ent.VersionId(versionId),
+		VersionId: versionId,
 	}
 
+	// insert new version of Object
 	newObjId, err := new_adapter.InsertOne(ctx, newObjVersion)
 	if err != nil {
 		err = errors.New("storage error:", errors.StgDbCrtObjErr, err)
-		return *newObjId, err
+		return nil, err
 	}
 
 	// get a root Object
 	rootObj, err := new_adapter.FindOne(ctx, bucketName, objectName)
 	if err != nil {
 		err = errors.New("storage error:", errors.StgDbCrtObjErr, err)
-		return *newObjId, err
+		return nil, err
+	}
+
+	rootObj.CurrentVersion = versionId
+
+	// update root object with a new current version
+	err = new_adapter.UpdateOneRootObj(ctx, rootObj)
+	if err != nil {
+		err = errors.New("storage error:", errors.StgDbCrtObjErr, err)
+		return nil, err
 	}
 
 	// create a new Version entry
@@ -100,15 +110,15 @@ func CreateObjectVers(ctx context.Context, bucketName string, objectName string,
 	_, err = new_adapter.UpdateOneVersion(ctx, rootObj, operator, operand, &newVersion)
 	if err != nil {
 		err = errors.New("storage error:", errors.StgDbCrtObjErr, err)
-		return *newObjId, err
+		return nil, err
 	}
 	// versionList := append(rootObj.VersionsList, newVersion)
 	// rootObj.VersionsList = versionList
 
-	return *newObjId, nil
+	return newObjId, nil
 }
 
-func CreateObject(ctx context.Context, bucketName string, objectName string, requesterUName string, curTime time.Time) (ent.ObjectId, error) {
+func CreateObject(ctx context.Context, bucketName string, objectName string, requesterUName string, curTime time.Time) (*ent.ObjectId, error) {
 	var newObj *ent.Object = &ent.Object{
 		BucketName: bucketName,
 		ObjectName: objectName,
@@ -124,10 +134,10 @@ func CreateObject(ctx context.Context, bucketName string, objectName string, req
 	objectId, err := new_adapter.InsertOne(ctx, newObj)
 	if err != nil {
 		err = errors.New("storage error:", errors.StgDbCrtObjErr, err)
-		return *objectId, err
+		return nil, err
 	}
 
-	return *objectId, nil
+	return objectId, nil
 }
 
 func DeleteObject(ctx context.Context, bucketName string, objectName string) (*ent.Object, *ent.ObjectId, error) {
@@ -156,7 +166,7 @@ func UndoObjectDelition(ctx context.Context, undoObj *ent.Object) error {
 	return nil
 }
 
-func UndoObjectCreation(ctx context.Context, objectId ent.ObjectId) error {
+func UndoObjectCreation(ctx context.Context, objectId *ent.ObjectId) error {
 	err := new_adapter.FindByIdAndDelte(ctx, objectId)
 	if err != nil {
 		err = errors.New("storage error:", errors.StgDbCrtObjUndoErr, err)
