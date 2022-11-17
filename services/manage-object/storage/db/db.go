@@ -54,7 +54,7 @@ func UpdateObject(ctx context.Context, bucketName string, objectName string, tou
 		LastUpdate: touchTime,
 	}
 
-	oldObj, err := new_adapter.UpdateOne(ctx, obj, "", "", nil)
+	oldObj, err := new_adapter.UpdateOne(ctx, obj)
 	if err != nil {
 		err = errors.New("storage error:", errors.StgDbUpdObjErr, err)
 		return nil, err
@@ -96,8 +96,8 @@ func CreateObjectVers(ctx context.Context, bucketName string, objectName string,
 
 	// update a list of object versions
 	operator := "$push"
-	operand := "VersionsList"
-	_, err = new_adapter.UpdateOne(ctx, rootObj, operator, operand, &newVersion)
+	operand := "versList"
+	_, err = new_adapter.UpdateOneVersion(ctx, rootObj, operator, operand, &newVersion)
 	if err != nil {
 		err = errors.New("storage error:", errors.StgDbCrtObjErr, err)
 		return *newObjId, err

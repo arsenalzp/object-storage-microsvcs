@@ -114,9 +114,46 @@ func InsertOne(ctx context.Context, newObj *ent.Object) (*ent.ObjectId, error) {
 	return &objId, nil
 }
 
+func UpdateOneVersion(ctx context.Context, updObj *ent.Object, operator, operand string, version *ent.Version) (*ent.Object, error) {
+	defer ctx.Done()
+
+	var update bson.M
+
+	filter := bson.M{
+		"bucketName": updObj.BucketName,
+		"objectName": updObj.ObjectName,
+	}
+
+	update = bson.M{
+		operator: bson.M{
+			operand: bson.M{
+				"_id":            primitive.ObjectID(version.ObjectId),
+				"versionId":      version.VersionId,
+				"CurrentVersion": true,
+			},
+		},
+	}
+
+	db, err := client.DbConnect()
+	if err != nil {
+		return nil, err
+	}
+
+	res := db.Collection(OCOLLECTION).FindOneAndUpdate(ctx, filter, update)
+	doc, err := decode(res, OCOLLECTION)
+	if err != nil {
+		return nil, err
+	}
+
+	obj := doc.(*ent.Object)
+
+	return obj, err
+
+}
+
 // Update single document in a collection and
 // returns MatchedCount, ModifiedCount and error
-func UpdateOne(ctx context.Context, updObj *ent.Object, operator, operand string, version *ent.Version) (*ent.Object, error) {
+func UpdateOne(ctx context.Context, updObj *ent.Object) (*ent.Object, error) {
 	defer ctx.Done()
 	var update bson.M
 
@@ -125,21 +162,10 @@ func UpdateOne(ctx context.Context, updObj *ent.Object, operator, operand string
 		"objectName": updObj.ObjectName,
 	}
 
-	if operator == "" {
-		update = bson.M{
-			"$set": bson.M{
-				"lastUpdate": updObj.LastUpdate,
-			},
-		}
-	} else {
-		update = bson.M{
-			operator: bson.M{
-				operand: bson.M{
-					"_id":       primitive.ObjectID(version.ObjectId),
-					"versionId": version.VersionId,
-				},
-			},
-		}
+	update = bson.M{
+		"$set": bson.M{
+			"lastUpdate": updObj.LastUpdate,
+		},
 	}
 
 	db, err := client.DbConnect()

@@ -13,14 +13,17 @@ type Access struct {
 	Grants `bson:"grants"`
 }
 
+type VersionId string
+type CurrentVersion bool
+
 type Version struct {
-	ObjectId  `bson:"_id,omitempty"`
-	VersionId `bson:"versionId"`
+	ObjectId       `bson:"_id"`
+	VersionId      `bson:"versionId"`
+	CurrentVersion `bson:"currentVersion"`
 }
 
 type ObjectId primitive.ObjectID
 type BucketId primitive.ObjectID
-type VersionId string
 
 type Object struct {
 	ObjectId     primitive.ObjectID `bson:"_id,omitempty"`
@@ -29,7 +32,7 @@ type Object struct {
 	Created      time.Time          `bson:"created,omitempty"`
 	LastUpdate   time.Time          `bson:"lastUpdate,omitempty"`
 	GrantsArray  []Access           `bson:"access,omitempty"`
-	VersionsList []Version          `bson:"versionsList,omitempty"`
+	VersionsList []Version          `bson:"version,omitempty"`
 	VersionId    `bson:"versionId,omitempty"`
 }
 
